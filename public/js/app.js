@@ -1023,6 +1023,12 @@ function setRouteMode(mode) {
   }
   updateHeaderModelLabel();
   renderConfigSummary();
+  const footerEl = document.getElementById('input-footer');
+  if (footerEl) {
+    const key = mode === 'direct' ? 'inputFooterDirect' : 'inputFooter';
+    footerEl.textContent = t(key);
+  }
+  if (userInfo?.code) saveParticipantConfig();
 }
 
 function initRouteMode() {

@@ -1,25 +1,27 @@
 /* ── Variables ── */
 :root {
-  --bg-primary: #071958;
-  --bg-secondary: #081a59;
-  --bg-tertiary: #0d286b;
-  --bg-hover: #123579;
+  --bg-primary: #07111f;
+  --bg-secondary: #0d1a2b;
+  --bg-tertiary: #13243a;
+  --bg-hover: #19324d;
   --accent: #00b5d4;
   --accent-hover: #008c95;
   --accent-glow: rgba(0, 181, 212, 0.24);
+  --accent-bg: rgba(0, 181, 212, 0.11);
   --purple: #008c95;
-  --success: #aff097;
+  --success: #8eea9d;
   --warning: #ff8200;
   --danger: #f26b43;
   --danger-strong: #dc2626;
   --route-secured: #008c95;
   --route-direct: #ff8200;
-  --text-primary: #f1f5f9;
-  --text-secondary: #d9faff;
-  --text-muted: #9de2ed;
-  --border: rgba(217, 250, 255, 0.18);
-  --border-subtle: rgba(217, 250, 255, 0.10);
-  --input-bg: #0d286b;
+  --text-primary: #f5f8fb;
+  --text-secondary: #c9d7e6;
+  --text-muted: #8ea4ba;
+  --border: rgba(148, 163, 184, 0.22);
+  --border-subtle: rgba(148, 163, 184, 0.12);
+  --input-bg: #0a1728;
+  --shadow-sm: 0 10px 24px rgba(0, 0, 0, 0.22);
   --sidebar-width: 260px;
   --radius: 10px;
   --radius-sm: 6px;
@@ -55,6 +57,8 @@
   --border: #cceef4;
   --border-subtle: #e9f8fb;
   --input-bg: #eef6f8;
+  --accent-bg: rgba(0, 169, 206, 0.11);
+  --shadow-sm: 0 10px 24px rgba(15, 23, 42, 0.08);
   --success: #008c95;
   --warning: #ff8200;
   --danger: #f26b43;
@@ -8004,4 +8008,429 @@ th[data-sortable][aria-sort="desc"] .sort-arrow { opacity: 1; color: var(--accen
 }
 .info-icon-wrap:hover .info-popover {
   transform: translateX(-50%) translateY(-2px);
+}
+
+/* Dark theme surfaces: participant + admin */
+[data-theme="dark"] {
+  color-scheme: dark;
+}
+
+[data-theme="dark"] body,
+[data-theme="dark"] #app,
+[data-theme="dark"] #admin-screen,
+[data-theme="dark"] .main-area,
+[data-theme="dark"] .adm-main {
+  background:
+    linear-gradient(180deg, rgba(0, 181, 212, 0.035), transparent 260px),
+    var(--bg-primary);
+}
+
+[data-theme="dark"] .sidebar,
+[data-theme="dark"] .adm-sidebar,
+[data-theme="dark"] .chat-header,
+[data-theme="dark"] .prompt-library-panel,
+[data-theme="dark"] .participant-tour-card,
+[data-theme="dark"] .model-dropdown-menu {
+  background: color-mix(in srgb, var(--bg-secondary) 92%, #000 8%);
+  border-color: var(--border);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.035);
+}
+
+[data-theme="dark"] .sidebar,
+[data-theme="dark"] .adm-sidebar {
+  box-shadow: 12px 0 34px rgba(0,0,0,0.22);
+}
+
+[data-theme="dark"] .chat-header {
+  background:
+    linear-gradient(180deg, rgba(255,255,255,0.035), transparent),
+    color-mix(in srgb, var(--bg-secondary) 90%, #000 10%);
+  box-shadow: 0 12px 28px rgba(0,0,0,0.2), inset 0 1px 0 rgba(255,255,255,0.04);
+}
+
+[data-theme="dark"] .sidebar-header,
+[data-theme="dark"] .sidebar-footer,
+[data-theme="dark"] .adm-sidebar-logo,
+[data-theme="dark"] .adm-sidebar-footer,
+[data-theme="dark"] .adm-card-header,
+[data-theme="dark"] .admin-form-actions,
+[data-theme="dark"] .standard-action-row,
+[data-theme="dark"] .prompt-list-item,
+[data-theme="dark"] .settings-provider-block {
+  border-color: var(--border-subtle);
+}
+
+[data-theme="dark"] .sidebar-action:hover,
+[data-theme="dark"] .adm-footer-btn:hover,
+[data-theme="dark"] .adm-nav-item:hover,
+[data-theme="dark"] .icon-btn:hover,
+[data-theme="dark"] .input-icon-btn:hover,
+[data-theme="dark"] .btn-secondary:hover,
+[data-theme="dark"] .model-dropdown-item:hover,
+[data-theme="dark"] .conv-item:hover,
+[data-theme="dark"] .prompt-library-item:hover,
+[data-theme="dark"] .empty-lab-card:hover {
+  background: color-mix(in srgb, var(--bg-hover) 86%, var(--accent) 5%);
+}
+
+[data-theme="dark"] .adm-nav-label,
+[data-theme="dark"] .sidebar-section-title,
+[data-theme="dark"] .participant-session-kicker,
+[data-theme="dark"] .empty-kicker,
+[data-theme="dark"] .config-section-title,
+[data-theme="dark"] .settings-section-label,
+[data-theme="dark"] .admin-product-kicker,
+[data-theme="dark"] .standard-product-kicker,
+[data-theme="dark"] .resource-product-kicker,
+[data-theme="dark"] .aip-product-kicker,
+[data-theme="dark"] .about-product-kicker {
+  color: color-mix(in srgb, var(--text-muted) 82%, var(--accent) 18%);
+}
+
+[data-theme="dark"] .adm-nav-item.active {
+  background: linear-gradient(135deg, var(--ns-teal), color-mix(in srgb, var(--accent) 76%, #0f766e));
+  color: #ffffff;
+  box-shadow: 0 8px 22px rgba(0, 181, 212, 0.22), inset 0 1px 0 rgba(255,255,255,0.18);
+}
+
+[data-theme="dark"] .btn-primary,
+[data-theme="dark"] .participant-tour-primary {
+  background: linear-gradient(135deg, var(--ns-teal), var(--accent));
+  border-color: color-mix(in srgb, var(--accent) 74%, #fff 8%);
+  color: #ffffff;
+  box-shadow: 0 10px 22px rgba(0, 181, 212, 0.18);
+}
+
+[data-theme="dark"] .btn-primary:hover,
+[data-theme="dark"] .participant-tour-primary:hover {
+  background: linear-gradient(135deg, color-mix(in srgb, var(--ns-teal) 82%, #fff 8%), color-mix(in srgb, var(--accent) 86%, #fff 10%));
+}
+
+[data-theme="dark"] .btn-secondary,
+[data-theme="dark"] .participant-tour-secondary,
+[data-theme="dark"] .participant-tour-skip,
+[data-theme="dark"] .input-model-btn,
+[data-theme="dark"] .chat-model-badge,
+[data-theme="dark"] #route-toggle,
+[data-theme="dark"] .ctf-state-control,
+[data-theme="dark"] .mode-toggle {
+  background: color-mix(in srgb, var(--bg-tertiary) 82%, #000 18%);
+  border-color: var(--border);
+  color: var(--text-secondary);
+}
+
+[data-theme="dark"] .adm-card,
+[data-theme="dark"] .adm-stat-card,
+[data-theme="dark"] .admin-create-panel,
+[data-theme="dark"] .settings-danger-zone,
+[data-theme="dark"] .settings-danger-action,
+[data-theme="dark"] .about-details-card,
+[data-theme="dark"] .about-info-card,
+[data-theme="dark"] .about-actions-panel,
+[data-theme="dark"] .challenge-type-card,
+[data-theme="dark"] .empty-lab-card,
+[data-theme="dark"] .config-summary,
+[data-theme="dark"] .api-key-display {
+  background:
+    linear-gradient(180deg, rgba(255,255,255,0.035), transparent 120px),
+    color-mix(in srgb, var(--bg-secondary) 86%, #000 14%);
+  border-color: var(--border);
+  box-shadow: 0 14px 36px rgba(0,0,0,0.22), inset 0 1px 0 rgba(255,255,255,0.04);
+}
+
+[data-theme="dark"] .adm-card-header,
+[data-theme="dark"] .standard-action-row,
+[data-theme="dark"] .admin-form-actions {
+  background: color-mix(in srgb, var(--bg-tertiary) 52%, transparent);
+}
+
+[data-theme="dark"] .adm-stat-card,
+[data-theme="dark"] .empty-lab-card {
+  border-color: color-mix(in srgb, var(--border) 78%, var(--accent) 12%);
+}
+
+[data-theme="dark"] .standard-product-hero,
+[data-theme="dark"] .settings-product-hero,
+[data-theme="dark"] .admin-product-hero,
+[data-theme="dark"] .aip-product-hero,
+[data-theme="dark"] .resource-product-hero,
+[data-theme="dark"] .about-product-hero {
+  background:
+    linear-gradient(135deg, color-mix(in srgb, var(--accent) 15%, transparent), transparent 48%),
+    linear-gradient(180deg, rgba(255,255,255,0.04), transparent),
+    color-mix(in srgb, var(--bg-secondary) 86%, #000 14%);
+  border-color: var(--border-subtle);
+}
+
+[data-theme="dark"] .standard-product-stat,
+[data-theme="dark"] .standard-action-tile,
+[data-theme="dark"] .standard-icon-tile,
+[data-theme="dark"] .standard-help-tile,
+[data-theme="dark"] .settings-product-stat,
+[data-theme="dark"] .settings-help-tile,
+[data-theme="dark"] .admin-product-stat,
+[data-theme="dark"] .admin-help-tile,
+[data-theme="dark"] .aip-sync-tile,
+[data-theme="dark"] .aip-help-tile,
+[data-theme="dark"] .resource-sync-tile,
+[data-theme="dark"] .resource-help-tile,
+[data-theme="dark"] .about-version-card,
+[data-theme="dark"] .about-help-tile,
+[data-theme="dark"] .about-capability {
+  background: color-mix(in srgb, var(--bg-tertiary) 76%, var(--accent) 6%);
+  border-color: color-mix(in srgb, var(--border) 76%, var(--accent) 18%);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.045);
+}
+
+[data-theme="dark"] .standard-action-tile:hover,
+[data-theme="dark"] .standard-icon-tile:hover,
+[data-theme="dark"] .standard-help-tile:hover,
+[data-theme="dark"] .settings-help-tile:hover,
+[data-theme="dark"] .admin-help-tile:hover,
+[data-theme="dark"] .aip-sync-tile:hover,
+[data-theme="dark"] .aip-help-tile:hover,
+[data-theme="dark"] .resource-sync-tile:hover,
+[data-theme="dark"] .resource-help-tile:hover,
+[data-theme="dark"] .about-version-card--action:hover,
+[data-theme="dark"] .about-help-tile:hover {
+  background: color-mix(in srgb, var(--bg-hover) 72%, var(--accent) 10%);
+  border-color: color-mix(in srgb, var(--accent) 42%, var(--border));
+  box-shadow: 0 12px 26px rgba(0,0,0,0.22), inset 0 1px 0 rgba(255,255,255,0.06);
+}
+
+[data-theme="dark"] .input-wrapper {
+  background: color-mix(in srgb, var(--bg-secondary) 88%, #000 12%);
+  border-color: color-mix(in srgb, var(--border) 78%, var(--accent) 12%);
+}
+
+[data-theme="dark"] input,
+[data-theme="dark"] textarea,
+[data-theme="dark"] select,
+[data-theme="dark"] .config-field input,
+[data-theme="dark"] .config-field select,
+[data-theme="dark"] .settings-card-body input[type="text"],
+[data-theme="dark"] .settings-card-body input[type="password"],
+[data-theme="dark"] .settings-card-body input[type="number"],
+[data-theme="dark"] .admin-create-panel input,
+[data-theme="dark"] .challenge-admin-table .adm-inline-input,
+[data-theme="dark"] .prompt-admin-table .adm-inline-input,
+[data-theme="dark"] .challenge-add-table .adm-inline-input,
+[data-theme="dark"] .challenge-add-card .adm-inline-input,
+[data-theme="dark"] .wizard-field input,
+[data-theme="dark"] .wizard-field textarea,
+[data-theme="dark"] .wiz-token-input,
+[data-theme="dark"] .ctf-timer-set input,
+[data-theme="dark"] .prompt-inline-editor {
+  background: color-mix(in srgb, var(--input-bg) 88%, #000 12%);
+  border-color: var(--border);
+  color: var(--text-primary);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.035);
+}
+
+[data-theme="dark"] input::placeholder,
+[data-theme="dark"] textarea::placeholder {
+  color: color-mix(in srgb, var(--text-muted) 78%, transparent);
+}
+
+[data-theme="dark"] input:focus,
+[data-theme="dark"] textarea:focus,
+[data-theme="dark"] select:focus,
+[data-theme="dark"] .adm-inline-input:focus,
+[data-theme="dark"] .prompt-inline-editor:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-glow), inset 0 1px 0 rgba(255,255,255,0.04);
+  outline: none;
+}
+
+[data-theme="dark"] select option {
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+}
+
+[data-theme="dark"] .adm-table th,
+[data-theme="dark"] .data-table th,
+[data-theme="dark"] .challenge-admin-table th {
+  background: color-mix(in srgb, var(--bg-tertiary) 78%, #000 22%);
+  border-color: var(--border);
+  color: color-mix(in srgb, var(--text-muted) 88%, var(--accent) 12%);
+}
+
+[data-theme="dark"] .adm-table td,
+[data-theme="dark"] .data-table td,
+[data-theme="dark"] .challenge-admin-table td {
+  border-color: var(--border-subtle);
+  color: var(--text-secondary);
+}
+
+[data-theme="dark"] .adm-table tr:hover td,
+[data-theme="dark"] .data-table tr:hover td,
+[data-theme="dark"] .challenge-admin-table tbody tr:hover td {
+  background: color-mix(in srgb, var(--bg-hover) 72%, var(--accent) 5%);
+}
+
+[data-theme="dark"] .message-row.user {
+  background: color-mix(in srgb, var(--bg-secondary) 58%, transparent);
+}
+
+[data-theme="dark"] .message-row.assistant .message-avatar,
+[data-theme="dark"] .message-row.user .message-avatar,
+[data-theme="dark"] .user-avatar,
+[data-theme="dark"] .empty-lab-card-icon,
+[data-theme="dark"] .prompt-list-num,
+[data-theme="dark"] .row-icon-btn {
+  background: color-mix(in srgb, var(--bg-tertiary) 74%, var(--accent) 7%);
+  border-color: color-mix(in srgb, var(--border) 74%, var(--accent) 16%);
+}
+
+[data-theme="dark"] .row-icon-btn:hover {
+  background: color-mix(in srgb, var(--bg-hover) 72%, var(--accent) 8%);
+}
+
+[data-theme="dark"] .challenge-text-key-value,
+[data-theme="dark"] .info-popover,
+[data-theme="dark"] .row-icon-btn[data-tooltip]::before {
+  background: color-mix(in srgb, var(--bg-secondary) 94%, var(--accent) 6%);
+  border-color: color-mix(in srgb, var(--accent) 26%, var(--border));
+  color: var(--text-primary);
+  box-shadow: 0 18px 36px rgba(0,0,0,0.28);
+}
+
+[data-theme="dark"] .info-popover strong,
+[data-theme="dark"] .info-popover span {
+  color: var(--text-secondary);
+}
+
+[data-theme="dark"] .info-popover code {
+  background: color-mix(in srgb, var(--bg-tertiary) 86%, var(--accent) 8%);
+  border-color: color-mix(in srgb, var(--accent) 30%, var(--border));
+  color: var(--accent);
+}
+
+[data-theme="dark"] .info-icon-wrap::before {
+  border-top-color: color-mix(in srgb, var(--bg-secondary) 94%, var(--accent) 6%);
+}
+
+[data-theme="dark"] .about-update-msg,
+[data-theme="dark"] .settings-clear-warning {
+  background: color-mix(in srgb, var(--accent) 9%, transparent);
+  border-color: color-mix(in srgb, var(--accent) 26%, var(--border));
+  color: var(--text-secondary);
+}
+
+[data-theme="dark"] .about-update-msg--ok {
+  background: rgba(34,197,94,0.12);
+  color: #8eea9d;
+}
+
+[data-theme="dark"] .about-update-msg--warn {
+  background: rgba(245,158,11,0.13);
+  color: #fbbf24;
+}
+
+[data-theme="dark"] .about-update-msg--error {
+  background: rgba(239,68,68,0.13);
+  color: #f87171;
+}
+
+[data-theme="dark"] .adm-sidebar {
+  position: relative;
+  z-index: 40;
+}
+
+[data-theme="dark"] .adm-sidebar-logo {
+  background:
+    linear-gradient(135deg, color-mix(in srgb, var(--accent) 11%, transparent), transparent 54%),
+    linear-gradient(180deg, rgba(255,255,255,0.045), transparent),
+    color-mix(in srgb, var(--bg-secondary) 90%, #000 10%);
+  border-color: var(--border);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.055);
+  z-index: 45;
+}
+
+[data-theme="dark"] .adm-sidebar-logo span {
+  color: var(--text-primary);
+}
+
+[data-theme="dark"] .adm-sidebar-logo span span {
+  color: var(--text-muted);
+}
+
+[data-theme="dark"] .standard-product-copy h2,
+[data-theme="dark"] .settings-product-copy h2,
+[data-theme="dark"] .admin-product-copy h2,
+[data-theme="dark"] .about-product-copy h2,
+[data-theme="dark"] .aip-product-copy h2,
+[data-theme="dark"] .resource-product-copy h2,
+[data-theme="dark"] .standard-product-stat strong,
+[data-theme="dark"] .standard-action-tile strong,
+[data-theme="dark"] .settings-product-stat strong,
+[data-theme="dark"] .admin-product-stat strong,
+[data-theme="dark"] .about-version-value,
+[data-theme="dark"] .aip-sync-tile strong,
+[data-theme="dark"] .resource-sync-tile strong {
+  color: var(--text-primary);
+}
+
+[data-theme="dark"] .standard-product-copy p,
+[data-theme="dark"] .settings-product-copy p,
+[data-theme="dark"] .admin-product-copy p,
+[data-theme="dark"] .about-product-copy p,
+[data-theme="dark"] .aip-product-copy p,
+[data-theme="dark"] .resource-product-copy p {
+  color: var(--text-secondary);
+}
+
+[data-theme="dark"] .standard-product-kicker,
+[data-theme="dark"] .standard-product-stat-label,
+[data-theme="dark"] .settings-product-kicker,
+[data-theme="dark"] .settings-product-stat-label,
+[data-theme="dark"] .admin-product-kicker,
+[data-theme="dark"] .admin-product-stat-label,
+[data-theme="dark"] .about-product-kicker,
+[data-theme="dark"] .aip-product-kicker,
+[data-theme="dark"] .aip-product-stat-label,
+[data-theme="dark"] .resource-product-kicker,
+[data-theme="dark"] .resource-product-stat-label {
+  color: color-mix(in srgb, var(--text-muted) 76%, var(--accent) 24%);
+}
+
+[data-theme="dark"] .standard-action-tile,
+[data-theme="dark"] .standard-icon-tile,
+[data-theme="dark"] .standard-help-tile,
+[data-theme="dark"] .settings-help-tile,
+[data-theme="dark"] .admin-help-tile,
+[data-theme="dark"] .about-help-tile,
+[data-theme="dark"] .aip-sync-tile,
+[data-theme="dark"] .aip-help-tile,
+[data-theme="dark"] .resource-sync-tile,
+[data-theme="dark"] .resource-help-tile,
+[data-theme="dark"] .about-version-card {
+  color: color-mix(in srgb, var(--accent) 82%, #ffffff 12%);
+}
+
+[data-theme="dark"] .standard-action-tile svg,
+[data-theme="dark"] .standard-icon-tile svg,
+[data-theme="dark"] .standard-help-tile svg,
+[data-theme="dark"] .settings-help-tile svg,
+[data-theme="dark"] .admin-help-tile svg,
+[data-theme="dark"] .about-help-tile svg,
+[data-theme="dark"] .aip-sync-tile svg,
+[data-theme="dark"] .aip-help-tile svg,
+[data-theme="dark"] .resource-sync-tile svg,
+[data-theme="dark"] .resource-help-tile svg,
+[data-theme="dark"] .about-version-card svg {
+  stroke: currentColor;
+}
+
+[data-theme="dark"] .settings-help-tile::after,
+[data-theme="dark"] .admin-help-tile::after,
+[data-theme="dark"] .about-help-tile::after,
+[data-theme="dark"] .aip-help-tile::after,
+[data-theme="dark"] .resource-help-tile::after,
+[data-theme="dark"] .standard-help-tile::after,
+[data-theme="dark"] .aip-sync-tile::after,
+[data-theme="dark"] .resource-sync-tile::after,
+[data-theme="dark"] .standard-action-tile::after {
+  background: color-mix(in srgb, var(--accent) 18%, transparent);
+  color: color-mix(in srgb, var(--accent) 78%, #ffffff 18%);
 }
