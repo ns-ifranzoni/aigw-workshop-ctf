@@ -1,0 +1,41 @@
+// 200 Netskope-themed participant names for bulk participant generation.
+// Constraints (enforced by the access_codes username field): single token,
+// only [a-zA-Z0-9_-], <= 12 characters. Used as both username and password.
+const PARTICIPANT_NAMES = [
+  'zerotrustme', 'trustzero', 'trustportal', 'sandskope', 'netskopeplus', 'allwithskope',
+  'dinnerproxy', 'winneredge', 'sasepoint', 'secwizard', 'dlpregex', 'swgleader',
+  'ztnaconnect', 'aidataguard', 'tunnelpilot', 'tunneltester', 'steercfg', 'tenantadmin',
+  'malwarestop', 'threatalert', 'threathunter', 'secscan', 'sslinspect', 'trustlord',
+  'policyking', 'edgebeast', 'cloudghost', 'agentninja', 'sasewizard', 'nsgamer',
+  'sasegamer', 'nsclientup', 'nsagentup', 'proxyconnect', 'nsgatewayup', 'cloudallow',
+  'nscloudhero', 'inlinehero', 'sasefast', 'ztnafast', 'npafast', 'rbifast',
+  'newedgefast', 'steerfast', 'dlpprotect', 'swgfast', 'trafficup', 'inlineup',
+  'policyhero', 'edgetop', 'dlpprofile', 'swgfeature', 'skopeaiinfo', 'nsconnect',
+  'eventviewer', 'sasebeliever', 'edgebeliever', 'sasehello', 'nstechnixo', 'labtester',
+  'helloskope', 'sureskope', 'embracezero', 'trustmaster', 'targethunter', 'lemonedge',
+  'skillproxy', 'ironpolicy', 'botgamer', 'collectlog', 'cloudhero', 'edgechamp',
+  'trustlegend', 'policypro', 'sasepilot', 'ztnaqueen', 'npaking', 'rbimaster',
+  'casbknight', 'swgpaladin', 'dlpranger', 'agentmage', 'proxywarrior', 'tenantarcher',
+  'cloudbard', 'edgedruid', 'trustoracle', 'tunneldragon', 'inlineeagle', 'gatewaywolf',
+  'certtiger', 'ssllion', 'cloudpanda', 'proxykoala', 'agentotter', 'tenantllama',
+  'policyalpaca', 'edgepenguin', 'trustdolphin', 'sasewhale', 'ztnagecko', 'bravasedge',
+  'paellapolicy', 'churroagent', 'jamontrust', 'quesotunnel', 'tacogateway', 'burritocasb',
+  'waffleswg', 'cookiedlp', 'brownieztna', 'bananaedge', 'avocadocloud', 'coffeepolicy',
+  'latteproxy', 'pizzatunnel', 'burgeragent', 'friesgateway', 'chefadmin', 'menumaster',
+  'dessertpilot', 'fiestatrust', 'grooveedge', 'discocloud', 'djproxy', 'rockpolicy',
+  'jazzagent', 'salsasase', 'flamencodlp', 'vibescasb', 'zenztna', 'magicnpa',
+  'poweredge', 'boostcloud', 'flowproxy', 'wavepolicy', 'pulseagent', 'sparktrust',
+  'flashsase', 'lightedge', 'forceztna', 'questnpa', 'arenacasb', 'trophyswg',
+  'medaldlp', 'goldpolicy', 'silveragent', 'diamondtrust', 'platinumedge', 'elitecloud',
+  'primeproxy', 'alphasase', 'omegaztna', 'vectornpa', 'orbitcasb', 'moonswg',
+  'sundlp', 'starpolicy', 'galaxyagent', 'nebulatrust', 'cometedge', 'cosmosproxy',
+  'rocketnpa', 'falconedge', 'jedisase', 'padawanzero', 'wookieetrust', 'ewokproxy',
+  'mandopolicy', 'grogugateway', 'forceuser', 'trustjedi', 'sasejedi', 'dlpjedi',
+  'swgjedi', 'ztnaforce', 'npaforce', 'casbforce', 'rbiforce', 'saseforce',
+  'newedgeforce', 'policyforce', 'tenantforce', 'agentforce', 'cloudforce', 'proxyforce',
+  'inlineforce', 'trafficforce', 'tunnelforce', 'secureforce', 'sabertrust', 'saberpolicy',
+  'saberedge', 'sabercloud', 'sabersase', 'trusttrooper', 'sasetrooper', 'edgepilot',
+  'cloudpilot', 'technixo'
+];
+
+module.exports = PARTICIPANT_NAMES;

@@ -1,0 +1,12 @@
+node_modules/
+data/*.db
+data/*.sqlite
+.env
+.DS_Store
+.firecrawl/
+.claude
+.codex-backups/
+*.bak
+data/*.from-new*
+
+CLAUDE.md

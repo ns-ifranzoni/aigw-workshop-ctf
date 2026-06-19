@@ -1,0 +1,276 @@
+/* ============================================================
+   responsive.css — mobile/tablet layer, loaded AFTER main.css
+   so its rules win at equal specificity. Isolated on purpose:
+   reverting responsive work = drop this file + its <link>.
+
+   Breakpoint system (consolidated):
+     - Desktop  : > 1024px      (base styles live in main.css)
+     - Tablet   : <= 1024px
+     - Mobile   : <= 640px
+     - Small    : <= 400px      (fine-tuning only)
+
+   Phases: [1] base/system  [2] login  [3] participant  [4] admin
+   ============================================================ */
+
+/* ─────────────────────────────────────────────────────────
+   PHASE 2 — Login / Register
+   main.css already stacks the two-column shell at <=900px and
+   reorders the card at <=560px. Here we only add touch-/mobile
+   ergonomics that were missing.
+   ───────────────────────────────────────────────────────── */
+@media (max-width: 640px) {
+  /* iOS Safari zooms when an input's font-size is < 16px. Force 16px
+     on the login/register fields to stop the auto-zoom on focus. */
+  #login-screen .form-group input {
+    font-size: 16px;
+    min-height: 44px;
+    letter-spacing: 1px;
+  }
+
+  /* Comfortable tap targets for the primary action and language picker */
+  #login-screen .btn-primary {
+    min-height: 46px;
+  }
+  #login-screen .lang-picker-btn {
+    min-height: 40px;
+  }
+  #login-screen .login-lang-row {
+    display: flex;
+  }
+
+  /* Order on mobile: brief/telemetry on top, sign-in card below.
+     Overrides main.css's `.login-card { order: -1 }` at <=560px. */
+  #login-screen .login-brief { order: -1; }
+  #login-screen .login-card { order: 0; }
+}
+
+/* ─────────────────────────────────────────────────────────
+   PHASE 3 — Participant portal
+   The sidebar was display:none at <=640px with no replacement,
+   leaving no navigation on mobile. Turn it into an off-canvas
+   drawer opened by a hamburger in the chat header.
+   ───────────────────────────────────────────────────────── */
+
+/* Off-canvas primitives — hidden on desktop */
+.mobile-nav-toggle { display: none; }
+.mobile-nav-backdrop { display: none; }
+
+@media (max-width: 640px) {
+  /* Hamburger button in the chat header */
+  .mobile-nav-toggle {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px; height: 40px;
+    flex-shrink: 0;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background: var(--bg-secondary);
+    color: var(--text-secondary);
+    cursor: pointer;
+  }
+  .chat-header-left {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  /* Sidebar → off-canvas drawer (overrides main.css display:none) */
+  #app .sidebar {
+    display: flex !important;
+    position: fixed;
+    top: 0; left: 0; bottom: 0;
+    width: 280px;
+    max-width: 84vw;
+    overflow-x: hidden;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    transform: translateX(-100%);
+    transition: transform 0.25s cubic-bezier(.4,0,.2,1);
+    z-index: 1500;
+  }
+  #app .sidebar.collapsed { width: 280px; }
+  #app.nav-open .sidebar {
+    transform: translateX(0);
+    box-shadow: 4px 0 24px rgba(0,0,0,0.28);
+  }
+
+  /* Dimmed backdrop behind the drawer */
+  #app .mobile-nav-backdrop {
+    display: block;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.45);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.25s;
+    z-index: 1499;
+  }
+  #app.nav-open .mobile-nav-backdrop {
+    opacity: 1;
+    pointer-events: auto;
+  }
+
+  /* Desktop collapse/expand controls are redundant with the drawer */
+  .sidebar-expand-btn,
+  .sidebar-collapse-btn { display: none !important; }
+
+  /* Keep the mobile drawer visually balanced when there are only a few
+     conversations. On desktop the conversation list fills the sidebar; in the
+     drawer that creates a large empty gap before the user/actions block. */
+  #app .conversations-list {
+    flex: 0 1 auto;
+    max-height: min(34vh, 280px);
+    min-height: 0;
+    padding-bottom: 8px;
+    overflow-y: auto;
+  }
+  #app .sidebar-footer {
+    flex-shrink: 0;
+    margin-top: 8px;
+  }
+
+  /* Side panels must never exceed the viewport. #challenges-panel sets
+     width:460px via an id rule that out-specifies the generic panel
+     width, so it overflowed (cut off on the left). Clamp it here. */
+  .prompt-library-panel.open { max-width: 100vw; }
+  #challenges-panel.open,
+  #leaderboard-panel.open {
+    width: min(440px, 100vw);
+    flex-basis: auto;
+  }
+
+  /* Declutter the participant top bar on mobile (per request): hide the
+     prompt counter, tutorial button and theme toggle.
+     The Secured/Direct toggle stays (JS controls its visibility).
+     !important beats the inline display set by JS. */
+  .chat-header #prompt-counter,
+  .chat-header #header-tour-btn,
+  .chat-header #header-theme-btn {
+    display: none !important;
+  }
+
+  /* Compact participant header.
+     main.css stacks the header into a tall column on mobile and the
+     Secured/Direct buttons keep their 150px min-width + wide padding,
+     which overflows ~390px viewports. Rebuild it as a tight 2-row layout:
+       row 1: hamburger + session title ........ timer chip
+       row 2: full-width Secured/Direct toggle (buttons share the width). */
+  .chat-header {
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+    min-height: 0;
+    padding: 8px 12px;
+  }
+  /* Drop the eyebrow and keep the title on one line to save height */
+  .participant-session-kicker { display: none; }
+  .participant-session-title { white-space: nowrap; font-size: 13px; }
+
+  .chat-header-left {
+    width: auto;
+    flex: 1 1 auto;
+    min-width: 0;
+  }
+  .chat-header-right {
+    width: auto;
+    flex: 0 0 auto;
+    justify-content: flex-end;
+    flex-wrap: nowrap;
+  }
+  /* Route toggle drops to its own full-width row */
+  .chat-header-center {
+    order: 3;
+    flex: 1 0 100%;
+    width: 100%;
+  }
+  #route-toggle { width: 100%; }
+  .route-btn {
+    flex: 1 1 0;
+    min-width: 0;
+    padding: 9px 8px;
+  }
+}
+
+/* ─────────────────────────────────────────────────────────
+   PHASE 4 — Admin portal
+   The admin sidebar (.adm-sidebar) never collapsed and the data
+   tables had no scroll container, so they broke the layout on
+   narrow screens. Add an off-canvas drawer + horizontal table
+   scroll.
+   ───────────────────────────────────────────────────────── */
+
+/* Off-canvas primitives — hidden on desktop */
+.adm-mobile-nav-toggle { display: none; }
+.adm-nav-backdrop { display: none; }
+
+/* Tablet & below: data tables scroll horizontally inside their card
+   instead of crushing their columns. The fixed `width:100%` tables would
+   otherwise squeeze every column to ~0 on a phone (headers and SEQ/text
+   overlapped), so we give each a sensible min-width keyed to its column
+   count and let the card scroll. */
+@media (max-width: 1024px) {
+  #admin-screen .adm-card { overflow-x: auto; }
+  #admin-screen .adm-table:not(.resource-admin-table) {
+    min-width: 680px;
+  }
+  /* Token / MCP / AI-provider tables carry the most columns */
+  #admin-screen .resource-admin-table {
+    min-width: 900px;
+  }
+}
+
+@media (max-width: 640px) {
+  /* Hamburger (fixed, top-left) */
+  .adm-mobile-nav-toggle {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    position: fixed;
+    top: 12px; left: 12px;
+    width: 40px; height: 40px;
+    border-radius: 8px;
+    background: var(--bg-secondary);
+    border: 1px solid var(--border);
+    color: var(--text-secondary);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.12);
+    cursor: pointer;
+    z-index: 1500;
+  }
+
+  /* Sidebar → off-canvas drawer */
+  #admin-screen .adm-sidebar {
+    position: fixed;
+    top: 0; left: 0; bottom: 0;
+    width: 260px;
+    max-width: 84vw;
+    min-width: 0;
+    transform: translateX(-100%);
+    transition: transform 0.25s cubic-bezier(.4,0,.2,1);
+    z-index: 1600;
+  }
+  #admin-screen.nav-open .adm-sidebar {
+    transform: translateX(0);
+    box-shadow: 4px 0 24px rgba(0,0,0,0.28);
+  }
+
+  /* Backdrop */
+  #admin-screen .adm-nav-backdrop {
+    display: block;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.45);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.25s;
+    z-index: 1550;
+  }
+  #admin-screen.nav-open .adm-nav-backdrop {
+    opacity: 1;
+    pointer-events: auto;
+  }
+
+  /* Make room so the fixed hamburger doesn't cover the page title */
+  #admin-screen .adm-page-header { padding-left: 50px; min-height: 40px; }
+}

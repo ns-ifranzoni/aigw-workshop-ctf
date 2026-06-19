@@ -1,0 +1,14 @@
+name: ntsk-ai-gw-workshop-ctf
+
+services:
+  ntsk-ai-gw-workshop-ctf:
+    build: .
+    image: ntsk-ai-gw-workshop-ctf
+    container_name: ntsk-ai-gw-workshop-ctf
+    ports:
+      - "3001:3001"
+    environment:
+      - PORT=3001
+    volumes:
+      - ./data:/app/data
+    restart: unless-stopped

@@ -1,0 +1,2699 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="icon" type="image/png" href="/netskope_favicon.png" />
+  <title>Netskope AI GW Workshop &amp; CTF</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/css/main.css" />
+  <link rel="stylesheet" href="/css/responsive.css" />
+</head>
+<body>
+
+<!-- ══════════════════════════════════════
+     LOGIN SCREEN
+══════════════════════════════════════ -->
+<div id="login-screen">
+  <div class="login-shell">
+    <section class="login-brief" aria-label="Workshop overview">
+      <div class="login-logo">
+        <img id="login-logo-img" src="/img/netskope-logo-dark.png" alt="Netskope" />
+      </div>
+      <h1>
+        <span>Netskope AI Gateway</span>
+        <span class="login-title-subline">Workshop &amp; CTF All in one</span>
+      </h1>
+      <p>Hands-on security operations environment for routing, inspecting, and challenging AI traffic.</p>
+
+      <div class="login-signal-grid" aria-label="Workshop status">
+        <div class="login-signal-card login-signal-card--active">
+          <span class="login-signal-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="m9 12 2 2 4-5"/></svg>
+          </span>
+          <span class="login-signal-copy">
+            <span>Gateway route</span>
+            <strong>Secured</strong>
+          </span>
+        </div>
+        <div class="login-signal-card">
+          <span class="login-signal-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="5" y="4" width="14" height="16" rx="2"/><path d="M9 9h6"/><path d="M9 13h4"/></svg>
+          </span>
+          <span class="login-signal-copy">
+            <span>Registration</span>
+            <strong id="login-reg-status">—</strong>
+          </span>
+        </div>
+        <div class="login-signal-card">
+          <span class="login-signal-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="12" cy="12" r="8"/><path d="M12 8v4l2.5 2.5"/><path d="M9 2h6"/></svg>
+          </span>
+          <span class="login-signal-copy">
+            <span>CTF status</span>
+            <strong id="login-ctf-status">—</strong>
+          </span>
+        </div>
+      </div>
+
+      <div class="login-telemetry-panel" aria-label="Live lab telemetry">
+        <div class="telemetry-header">
+          <span>Live lab telemetry</span>
+          <span id="telemetry-ts">—</span>
+        </div>
+        <div class="telemetry-row">
+          <span class="telemetry-dot" id="telemetry-gw-dot"></span>
+          <span>AI Gateway</span>
+          <code id="telemetry-gw">—</code>
+        </div>
+        <div class="telemetry-row">
+          <span class="telemetry-dot telemetry-dot--ok"></span>
+          <span>Participants</span>
+          <code id="telemetry-participants">—</code>
+        </div>
+        <div class="telemetry-row">
+          <span class="telemetry-dot telemetry-dot--ok"></span>
+          <span>Challenges</span>
+          <code id="telemetry-challenges">—</code>
+        </div>
+        <div class="telemetry-row telemetry-row--ranking">
+          <span class="telemetry-dot telemetry-dot--ok" id="telemetry-top-dot"></span>
+          <span>Ranking</span>
+          <div id="telemetry-top" class="telemetry-ranking">—</div>
+        </div>
+      </div>
+    </section>
+
+    <section class="login-card" aria-label="Access form">
+      <div class="login-card-kicker">Workshop access</div>
+
+      <!-- Login form -->
+      <div id="login-form-panel">
+        <h2 data-i18n="login_title">Sign in</h2>
+        <p data-i18n="login_subtitle">Enter your username and password to access the lab.</p>
+        <div class="form-group">
+          <label for="login-username-input" data-i18n="login_username">Username</label>
+          <input type="text" id="login-username-input" placeholder="your-username" autocomplete="username" autocapitalize="off" maxlength="32" />
+        </div>
+        <div class="form-group">
+          <label for="login-password-input" data-i18n="login_password">Password</label>
+          <input type="password" id="login-password-input" placeholder="••••••" autocomplete="current-password" maxlength="32" />
+        </div>
+        <button class="btn-primary" id="login-btn" type="button" onclick="handleLogin()">
+          <span data-i18n="login_btn">Login</span>
+        </button>
+        <div class="login-error" id="login-error"></div>
+        <div class="login-switch-row">
+          <span data-i18n="login_no_account">No account yet?</span>
+          <button class="btn-link" type="button" onclick="showRegisterPanel()" data-i18n="login_register_link">Register here</button>
+        </div>
+      </div>
+
+      <!-- Register form -->
+      <div id="register-form-panel" style="display:none;">
+        <h2 data-i18n="register_title">Create account</h2>
+        <p data-i18n="register_subtitle">Register with your username, password and the workshop registration code.</p>
+        <div class="form-group">
+          <label for="reg-username-input" data-i18n="login_username">Username</label>
+          <input type="text" id="reg-username-input" placeholder="5–8 characters" autocomplete="username" autocapitalize="off" minlength="5" maxlength="8" />
+        </div>
+        <div class="form-group">
+          <label for="reg-password-input" data-i18n="login_password">Password</label>
+          <input type="password" id="reg-password-input" placeholder="5–8 characters" autocomplete="new-password" minlength="5" maxlength="8" />
+        </div>
+        <div class="form-group">
+          <label for="reg-code-input" data-i18n="register_code_label">Registration Code</label>
+          <input type="text" id="reg-code-input" placeholder="workshop-code" autocomplete="off" autocapitalize="off" />
+        </div>
+        <button class="btn-primary" id="register-btn" type="button" onclick="handleRegister()">
+          <span data-i18n="register_btn">Create Account</span>
+        </button>
+        <div class="login-error" id="register-error"></div>
+        <div class="login-switch-row">
+          <span data-i18n="register_have_account">Already registered?</span>
+          <button class="btn-link" type="button" onclick="showLoginPanel()" data-i18n="register_login_link">Sign in</button>
+        </div>
+      </div>
+
+      <!-- Admin first-login password setup -->
+      <div id="admin-setup-panel" style="display:none;">
+        <h2 data-i18n="admin_setup_title">Set admin password</h2>
+        <p data-i18n="admin_setup_subtitle">First sign-in for this admin account. Choose a password to secure it.</p>
+        <div class="form-group">
+          <label data-i18n="login_username">Username</label>
+          <input type="text" id="admin-setup-username" autocomplete="username" readonly />
+        </div>
+        <div class="form-group">
+          <label for="admin-setup-password" data-i18n="admin_setup_new_password">New password</label>
+          <input type="password" id="admin-setup-password" placeholder="At least 8 characters" autocomplete="new-password" minlength="8" maxlength="64" />
+        </div>
+        <div class="form-group">
+          <label for="admin-setup-confirm" data-i18n="admin_setup_confirm_password">Confirm password</label>
+          <input type="password" id="admin-setup-confirm" placeholder="Re-enter password" autocomplete="new-password" minlength="8" maxlength="64" onkeydown="if(event.key==='Enter')handleAdminSetup()" />
+        </div>
+        <button class="btn-primary" id="admin-setup-btn" type="button" onclick="handleAdminSetup()">
+          <span data-i18n="admin_setup_btn">Set password & sign in</span>
+        </button>
+        <div class="login-error" id="admin-setup-error"></div>
+      </div>
+
+      <div class="login-form-meta">
+        <span>Monitored session</span>
+        <span>Gateway enforced</span>
+      </div>
+
+      <div class="login-lang-row">
+        <div class="lang-picker" id="login-lang-picker">
+          <button class="lang-picker-btn" type="button" onclick="toggleLangPicker(event)" aria-haspopup="true" aria-label="Select language">
+            <span id="login-lang-flag">🇬🇧</span>
+            <span id="login-lang-label">EN</span>
+            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
+          </button>
+          <div class="lang-picker-dropdown" id="lang-picker-dropdown">
+            <button onclick="setLang('en')" data-lang="en">🇬🇧 English</button>
+            <button onclick="setLang('es')" data-lang="es">🇪🇸 Español</button>
+            <button onclick="setLang('pt')" data-lang="pt">🇵🇹 Português</button>
+            <button onclick="setLang('fr')" data-lang="fr">🇫🇷 Français</button>
+            <button onclick="setLang('de')" data-lang="de">🇩🇪 Deutsch</button>
+          </div>
+        </div>
+      </div>
+    </section>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════
+     MAIN APP
+══════════════════════════════════════ -->
+<div id="app">
+
+  <!-- Mobile nav backdrop (off-canvas drawer) -->
+  <div class="mobile-nav-backdrop" onclick="closeMobileNav()"></div>
+
+  <!-- Sidebar -->
+  <aside class="sidebar">
+    <div class="sidebar-header">
+      <div class="sidebar-logo">
+        <img id="participant-logo" src="/img/netskope-logo-dark.png" alt="Netskope" />
+        <span>Netskope AI Gateway<br/><span>Participant Lab Console</span></span>
+      </div>
+      <button class="sidebar-collapse-btn" onclick="toggleSidebar()" title="Collapse sidebar">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>
+      </button>
+    </div>
+    <div class="sidebar-new-chat-row">
+      <button class="btn-new-chat" onclick="newConversation()" title="New chat">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        <span id="sidebar-new-chat">New chat</span>
+      </button>
+    </div>
+
+    <div class="sidebar-section-title" id="sidebar-today">Today</div>
+    <div class="conversations-list" id="conversations-list"></div>
+
+    <div class="sidebar-footer">
+      <div class="user-badge">
+        <div class="user-avatar" id="user-avatar">U</div>
+        <div class="user-info">
+          <div class="user-name" id="user-name"> Participant</div>
+          <div class="user-role" id="user-role">Workshop participant</div>
+        </div>
+      </div>
+      <button class="sidebar-action" id="sidebar-lab-guide-btn" onclick="openPanel('instructions')" title="Guidelines">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+        <span id="sidebar-lab-guide">Guidelines</span>
+      </button>
+      <button class="sidebar-action" id="sidebar-prompt-library-btn" onclick="openPromptLibrary()" title="Prompt Library">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/><path d="M8 9h8"/><path d="M8 13h5"/></svg>
+        <span id="sidebar-prompts">Prompt Library</span>
+      </button>
+      <button class="sidebar-action" onclick="openChallengesPanel()" title="Capture the Flag" id="sidebar-challenges-btn">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" y1="22" x2="4" y2="15"/></svg>
+        <span id="sidebar-challenges">Capture the Flag</span>
+      </button>
+      <button class="sidebar-action" onclick="openLeaderboardPanel()" title="Leaderboard" id="sidebar-leaderboard-btn">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9H4.5a2.5 2.5 0 0 0 0 5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 1 0 5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/></svg>
+        <span id="sidebar-leaderboard">Leaderboard</span>
+      </button>
+      <button class="sidebar-action" onclick="openPanel('config')" title="Settings" id="sidebar-config-btn">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M4.93 4.93a10 10 0 0 0 0 14.14"/><path d="M12 2v2m0 16v2M2 12h2m16 0h2"/></svg>
+        <span id="sidebar-config">Settings</span>
+      </button>
+
+      <button class="sidebar-action" onclick="handleLogout()" title="Sign out">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+        <span id="sidebar-logout">Sign out</span>
+      </button>
+    </div>
+  </aside>
+
+  <!-- Main Chat -->
+  <main class="main-area">
+    <!-- Sidebar expand button (shown when sidebar is collapsed) -->
+    <button class="sidebar-expand-btn" id="sidebar-expand-btn" onclick="toggleSidebar()" title="Expand sidebar">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+    </button>
+    <header class="chat-header">
+      <div class="chat-header-left">
+        <button class="mobile-nav-toggle" onclick="toggleMobileNav()" aria-label="Open menu" title="Menu">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+        </button>
+        <div class="participant-session-block">
+          <div class="participant-session-kicker" id="participant-session-kicker">Workshop session</div>
+          <div class="participant-session-title" id="participant-session-title">Participant Lab Console</div>
+        </div>
+      </div>
+      <div class="chat-header-center">
+        <div id="route-toggle" style="display:none;">
+          <button id="route-secured" onclick="setRouteMode('secured')" class="route-btn route-btn--secured">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="m9 12 2 2 4-5"/></svg>
+            Secured
+          </button>
+          <button id="route-direct" onclick="setRouteMode('direct')" class="route-btn route-btn--direct">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M4 12h12"/><path d="m12 6 6 6-6 6"/><path d="M3 4.5 21 19.5"/></svg>
+            Direct
+          </button>
+        </div>
+      </div>
+      <div class="chat-header-right">
+        <div class="ctf-timer-chip is-idle" id="participant-timer-chip" title="CTF time remaining" style="display:none;">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l2.5 2.5"/><path d="M9 2h6"/></svg>
+          <span class="ctf-timer-val">--:--</span>
+        </div>
+<div id="prompt-counter" style="display:none;align-items:center;gap:6px;font-size:12px;color:var(--text-muted);background:var(--bg-secondary);border:1px solid var(--border);border-radius:20px;padding:4px 12px;">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+          <span id="prompt-counter-text">— / —</span>
+        </div>
+        <button class="icon-btn" onclick="startParticipantTour(true)" title="Portal tour" aria-label="Portal tour" id="header-tour-btn">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 17h.01"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/></svg>
+        </button>
+        <button class="icon-btn" onclick="toggleTheme()" title="Toggle theme" id="header-theme-btn">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" id="header-theme-icon"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+        </button>
+      </div>
+    </header>
+
+    <div class="chat-workspace">
+      <div class="chat-column">
+        <div class="messages-area" id="messages-area">
+          <div class="empty-state" id="empty-state">
+            <div class="empty-kicker" id="empty-kicker">Netskope AI Gateway Workshop & CTF All in one</div>
+            <h1 class="empty-greeting" id="empty-title">AI Gateway Lab Console</h1>
+            <p class="empty-sub" id="empty-subtitle">Run workshop prompts, compare secured versus direct routing, and inspect how policy controls affect AI traffic.</p>
+            <div class="empty-lab-grid">
+              <button class="empty-lab-card" onclick="openPromptLibrary()">
+                <span class="empty-lab-card-icon">
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/><path d="M8 9h8"/><path d="M8 13h5"/></svg>
+                </span>
+                <span>
+                  <strong id="empty-prompt-title">Prompt Library</strong>
+                  <small id="empty-prompt-body">Use prepared workshop prompts</small>
+                </span>
+              </button>
+              <button class="empty-lab-card" onclick="openChallengesPanel()">
+                <span class="empty-lab-card-icon">
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" y1="22" x2="4" y2="15"/></svg>
+                </span>
+                <span>
+                  <strong id="empty-ctf-title">Capture the Flag</strong>
+                  <small id="empty-ctf-body">Solve challenges & score points</small>
+                </span>
+              </button>
+              <button class="empty-lab-card" onclick="openPanel('instructions')">
+                <span class="empty-lab-card-icon">
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/></svg>
+                </span>
+                <span>
+                  <strong id="empty-guide-title">Guidelines</strong>
+                  <small id="empty-guide-body">Workshop objectives & challenges</small>
+                </span>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div class="input-area">
+<div class="input-wrapper">
+            <textarea id="prompt-input" rows="1" placeholder="Ask me anything..." onkeydown="handleKey(event)" oninput="autoResize(this)"></textarea>
+            <div class="input-bottom-row">
+              <button class="btn-send-circle" id="send-btn" onclick="sendMessage()">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></svg>
+              </button>
+            </div>
+          </div>
+          <div class="input-footer" id="input-footer">Routed through Netskope AI Gateway · All traffic is monitored and logged</div>
+        </div>
+      </div>
+
+      <aside class="prompt-library-panel" id="prompt-library-panel" ondragover="event.stopPropagation()" ondrop="event.stopPropagation()">
+        <div class="panel-header">
+          <h2 id="participant-prompt-library-title">Prompt Library</h2>
+          <button class="icon-btn" onclick="closePromptLibrary()">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+          </button>
+        </div>
+        <div class="prompt-library-list" id="participant-prompt-library-list"></div>
+      </aside>
+
+      <aside class="prompt-library-panel" id="challenges-panel" ondragover="event.stopPropagation()" ondrop="event.stopPropagation()">
+        <div class="panel-header">
+          <h2>Capture the Flag</h2>
+          <span id="ctf-status-badge" style="margin-left:auto;margin-right:10px;display:inline-flex;align-items:center;gap:5px;padding:3px 10px;border-radius:999px;font-size:11px;font-weight:600;"></span>
+          <button class="icon-btn" onclick="closeChallengesPanel()">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+          </button>
+        </div>
+        <div style="display:flex;gap:0;border-bottom:1px solid var(--border);margin-bottom:12px;">
+          <button id="chtab-list" onclick="showChallengeTab('list')" style="flex:1;padding:8px;font-size:12px;border:none;border-right:1px solid var(--border);background:var(--accent-bg);color:var(--accent);font-weight:600;cursor:pointer;">Challenges</button>
+          <button id="chtab-history" onclick="showChallengeTab('history')" style="flex:1;padding:8px;font-size:12px;border:none;border-right:1px solid var(--border);background:transparent;color:var(--text-secondary);cursor:pointer;">My progress</button>
+          <button id="chtab-scoring" onclick="showChallengeTab('scoring')" style="flex:1;padding:8px;font-size:12px;border:none;background:transparent;color:var(--text-secondary);cursor:pointer;">Rules</button>
+        </div>
+        <div id="chtab-panel-list">
+          <div id="challenges-list" style="display:flex;flex-direction:column;gap:10px;"></div>
+        </div>
+        <div id="chtab-panel-history" style="display:none;">
+          <div id="participant-challenge-history" style="display:flex;flex-direction:column;gap:0;"></div>
+        </div>
+        <div id="chtab-panel-scoring" style="display:none;padding:4px 2px;font-size:12px;color:var(--text-secondary);line-height:1.7;">
+          <div class="lab-step">
+            <div class="step-number">🏅</div>
+            <div class="step-content">
+              <h3>Points per challenge</h3>
+              <p>Each challenge awards a fixed number of points shown on its card. Points are granted <strong>only on the first correct submission</strong>. If you already completed a challenge, resubmitting it has no effect.</p>
+            </div>
+          </div>
+          <div class="lab-step">
+            <div class="step-number">❌</div>
+            <div class="step-content">
+              <h3>Penalty for wrong answers</h3>
+              <p>Every failed attempt deducts <strong>5 points</strong> from your total score. Think before you submit — wrong answers hurt your ranking even if you eventually solve the challenge.</p>
+            </div>
+          </div>
+          <div class="lab-step">
+            <div class="step-number">💡</div>
+            <div class="step-content">
+              <h3>Hints</h3>
+              <p>Some challenges have an optional hint. Look for the <strong>Use hint</strong> button on the challenge card. Using a hint costs <strong>−5 points</strong> — the same as a wrong answer. You can only use each hint once, and the cost is applied immediately when you confirm.</p>
+            </div>
+          </div>
+          <div class="lab-step">
+            <div class="step-number">🔁</div>
+            <div class="step-content">
+              <h3>Retry limit &amp; cooldown</h3>
+              <p>Each challenge has a maximum number of allowed attempts. If you reach the limit, the challenge is locked for <strong>5 minutes</strong>. After the cooldown the attempt counter resets and you can try again — but each new failure still costs 5 points.</p>
+            </div>
+          </div>
+          <div class="lab-step">
+            <div class="step-number">🧮</div>
+            <div class="step-content">
+              <h3>Score formula</h3>
+              <p><strong>Total score = Σ points from completed challenges − (failed attempts × 5) − (hints used × 5)</strong><br>Every wrong answer and every hint used reduces your score by 5 points.</p>
+            </div>
+          </div>
+          <div class="lab-step">
+            <div class="step-number">🏆</div>
+            <div class="step-content">
+              <h3>Tiebreaker</h3>
+              <p>If two participants have the same score, the one who reached it <strong>first</strong> ranks higher. Speed matters — don't wait until the last minute.</p>
+            </div>
+          </div>
+        </div>
+      </aside>
+
+      <aside class="prompt-library-panel" id="leaderboard-panel" ondragover="event.stopPropagation()" ondrop="event.stopPropagation()">
+        <div class="panel-header">
+          <h2>Leaderboard</h2>
+          <div style="display:flex;align-items:center;gap:6px;">
+            <button onclick="loadChallengesLeaderboard()" style="display:flex;align-items:center;gap:5px;padding:4px 10px;font-size:11px;font-weight:600;color:var(--text-secondary);background:var(--bg-secondary);border:1px solid var(--border);border-radius:6px;cursor:pointer;" onmouseover="this.style.color='var(--accent)';this.style.borderColor='var(--accent)'" onmouseout="this.style.color='var(--text-secondary)';this.style.borderColor='var(--border)'">
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-3.5"/></svg>
+              Refresh
+            </button>
+            <button class="icon-btn" onclick="closeLeaderboardPanel()">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            </button>
+          </div>
+        </div>
+        <div id="challenges-leaderboard" style="display:flex;flex-direction:column;gap:6px;"></div>
+      </aside>
+
+      <!-- Configuration Panel -->
+      <aside class="prompt-library-panel" id="config-panel">
+        <div class="panel-header">
+          <h2 id="panel-config-title">Settings</h2>
+          <button class="icon-btn" onclick="closePanel()">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+          </button>
+        </div>
+
+        <!-- Live session summary — reads first as state, then the form below -->
+        <div class="config-summary" id="config-summary">
+          <div class="config-summary-row">
+            <span class="config-summary-label">Route</span>
+            <span class="config-summary-val" id="cfg-sum-route">—</span>
+          </div>
+          <div class="config-summary-row">
+            <span class="config-summary-label">Mode</span>
+            <span class="config-summary-val" id="cfg-sum-mode">—</span>
+          </div>
+          <div class="config-summary-row">
+            <span class="config-summary-label" id="cfg-sum-target-label">Model</span>
+            <span class="config-summary-val" id="cfg-sum-target">—</span>
+          </div>
+          <div class="config-summary-row">
+            <span class="config-summary-label">GW Token</span>
+            <span class="config-summary-val" id="cfg-sum-token">—</span>
+          </div>
+        </div>
+
+        <div class="config-section">
+          <div class="config-section-title">Netskope Tenant</div>
+          <div class="config-field">
+            <label>Tenant URL</label>
+            <div class="api-key-display" id="cfg-tenant-url-display">—</div>
+          </div>
+          <div class="config-field">
+            <label id="cfg-label-token-group">Netskope AI GW Token Group</label>
+            <div class="api-key-display" id="cfg-token-group-display">—</div>
+            <label id="cfg-label-token-name" style="margin-top:10px;">Netskope AI GW Token Name</label>
+            <div class="api-key-display" id="cfg-token-name-display">—</div>
+          </div>
+        </div>
+
+        <div class="config-section">
+          <div class="config-section-title" id="cfg-section-mode">Mode</div>
+          <div class="mode-toggle">
+            <button class="mode-btn active" id="mode-llm" onclick="setMode('llm')">LLM</button>
+            <button class="mode-btn" id="mode-mcp" onclick="setMode('mcp')">MCP</button>
+          </div>
+          <div id="llm-config" style="display:flex;flex-direction:column;gap:12px;">
+            <div class="config-field">
+              <label id="cfg-label-provider">Provider</label>
+              <select id="cfg-provider" onchange="updateModelList()">
+                <option value="openai">OpenAI (GPT)</option>
+                <option value="bedrock">Amazon Bedrock</option>
+              </select>
+            </div>
+            <div class="config-field">
+              <label id="cfg-label-model">Model</label>
+              <select id="cfg-model" onchange="renderConfigSummary()"></select>
+            </div>
+          </div>
+          <div id="mcp-config" style="display:none;">
+            <div class="config-field">
+              <label id="cfg-label-mcp-server">MCP Server</label>
+              <select id="cfg-mcp-server" style="width:100%;"></select>
+              <span style="font-size:11px;color:var(--text-muted);margin-top:4px;display:block;" id="cfg-mcp-url-display"></span>
+            </div>
+          </div>
+        </div>
+
+        <div class="config-actions">
+          <span id="participant-config-save-msg">Saved</span>
+          <button class="btn-primary btn-icon" onclick="saveParticipantConfig()" style="width:auto;">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+            <span>Save</span>
+          </button>
+        </div>
+      </aside>
+
+      <!-- Instructions Panel -->
+      <aside class="prompt-library-panel" id="instructions-panel">
+        <div class="panel-header">
+          <h2 id="panel-lab-title">Guidelines</h2>
+          <button class="icon-btn" onclick="closePanel()">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+          </button>
+        </div>
+        <div id="lab-instructions-content"></div>
+      </aside>
+
+    </div>
+  </main>
+</div>
+
+<div class="participant-tour" id="participant-tour" aria-hidden="true">
+  <div class="participant-tour-backdrop"></div>
+  <div class="participant-tour-spotlight" id="participant-tour-spotlight"></div>
+  <section class="participant-tour-card" id="participant-tour-card" role="dialog" aria-modal="true" aria-labelledby="participant-tour-title">
+    <div class="participant-tour-step" id="participant-tour-step">Step 1 of 7</div>
+    <h2 id="participant-tour-title">Welcome to the lab</h2>
+    <p id="participant-tour-body">This short tour shows you where the main workshop tools are.</p>
+    <div class="participant-tour-progress" id="participant-tour-progress"></div>
+    <div class="participant-tour-actions">
+      <button class="participant-tour-skip" type="button" onclick="skipParticipantTour()">Skip</button>
+      <div class="participant-tour-action-group">
+        <button class="participant-tour-secondary" type="button" id="participant-tour-prev" onclick="previousParticipantTourStep()">Back</button>
+        <button class="participant-tour-primary" type="button" id="participant-tour-next" onclick="nextParticipantTourStep()">Next</button>
+      </div>
+    </div>
+  </section>
+</div>
+
+<!-- ══════════════════════════════════════
+     ADMIN SCREEN
+══════════════════════════════════════ -->
+<div id="admin-screen">
+  <!-- Mobile nav (off-canvas drawer) -->
+  <button class="adm-mobile-nav-toggle" onclick="toggleAdminNav()" aria-label="Open menu" title="Menu">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+  </button>
+  <div class="adm-nav-backdrop" onclick="closeAdminNav()"></div>
+
+  <!-- ── Sidebar ── -->
+  <aside class="adm-sidebar">
+    <div class="adm-sidebar-logo" style="flex-direction:column;align-items:flex-start;gap:8px;">
+      <img id="adm-logo" src="/img/netskope-logo-dark.png" alt="Netskope" style="height:28px;width:auto;" />
+      <span style="line-height:1.4;white-space:normal;">Netskope AI Gateway<br/><span style="font-size:11px;font-weight:500;color:var(--text-muted);">Workshop Admin Center</span></span>
+    </div>
+
+    <nav class="adm-nav">
+      <div class="adm-nav-label" data-i18n="nav_group_overview">Overview</div>
+      <button class="adm-nav-item" onclick="adminTab('dashboard')" id="tab-dashboard">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+        <span data-i18n="nav_dashboard">Dashboard</span>
+      </button>
+
+      <div class="adm-nav-label" data-i18n="nav_group_workshop">Capture the Flag</div>
+      <button class="adm-nav-item" onclick="adminTab('control')" id="tab-control">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+        <span data-i18n="nav_control_center">Control Center</span>
+      </button>
+      <button class="adm-nav-item" onclick="adminTab('codes')" id="tab-codes">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+        <span data-i18n="nav_participants">Participants</span>
+      </button>
+      <button class="adm-nav-item" onclick="adminTab('conversations')" id="tab-conversations">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+        <span data-i18n="nav_conversations">Conversations</span>
+      </button>
+      <button class="adm-nav-item" onclick="adminTab('prompts')" id="tab-prompts">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+        <span data-i18n="nav_prompt_library">Prompt Library</span>
+      </button>
+
+      <button class="adm-nav-item" onclick="adminTab('challenges')" id="tab-challenges">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" y1="22" x2="4" y2="15"/></svg>
+        <span data-i18n="nav_challenges">Challenges</span>
+      </button>
+
+      <div class="adm-nav-label" data-i18n="nav_group_netskope">Netskope</div>
+      <button class="adm-nav-item" onclick="adminTab('apikeys')" id="tab-apikeys">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"/></svg>
+        <span data-i18n="nav_gw_tokens">GW Tokens</span>
+      </button>
+      <button class="adm-nav-item" onclick="adminTab('mcp')" id="tab-mcp">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/><polyline points="7 8 12 13 17 8"/></svg>
+        <span data-i18n="nav_mcp">MCP Servers</span>
+      </button>
+      <button class="adm-nav-item" onclick="adminTab('aiproviders')" id="tab-aiproviders">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
+        <span data-i18n="nav_ai_providers">AI Providers</span>
+      </button>
+      <div class="adm-nav-label" data-i18n="nav_group_administration">Administration</div>
+      <button class="adm-nav-item" onclick="adminTab('settings')" id="tab-settings">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+        <span data-i18n="nav_global_settings">Global Settings</span>
+      </button>
+      <button class="adm-nav-item" onclick="adminTab('admins')" id="tab-admins">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+        <span data-i18n="nav_admins">Admins</span>
+      </button>
+      <button class="adm-nav-item" onclick="adminTab('about')" id="tab-about">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="8"/><line x1="12" y1="12" x2="12" y2="16"/></svg>
+        <span data-i18n="nav_about">About</span>
+      </button>
+    </nav>
+
+    <div class="adm-sidebar-footer">
+      <button class="adm-footer-btn" onclick="toggleTheme()">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+        <span data-i18n="nav_theme">Theme</span>
+      </button>
+      <button class="adm-footer-btn adm-signout" onclick="handleLogout()">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+        <span data-i18n="nav_sign_out">Sign out</span>
+      </button>
+    </div>
+  </aside>
+
+  <!-- ── Main area ── -->
+  <main class="adm-main">
+
+    <!-- ── Dashboard ── -->
+    <div class="admin-section" id="section-dashboard">
+      <div class="adm-card standard-product-card">
+        <div class="standard-product-hero">
+          <div class="standard-product-copy">
+            <span class="standard-product-kicker">Workshop command view</span>
+            <h2 data-i18n="dash_title">Dashboard</h2>
+            <p>Monitor workshop readiness, live CTF status, leaderboard performance and participant activity from one overview.</p>
+          </div>
+          <div class="standard-hero-actions dashboard-hero-actions">
+            <button class="standard-icon-tile" onclick="openSetupWizard()" title="Open setup wizard" aria-label="Open setup wizard">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 21v-7"/><path d="M4 10V3"/><path d="M12 21v-9"/><path d="M12 8V3"/><path d="M20 21v-5"/><path d="M20 12V3"/><path d="M2 14h4"/><path d="M10 8h4"/><path d="M18 16h4"/></svg>
+            </button>
+            <button class="standard-help-tile" onclick="openHelpSidebar('dashboard')" title="Open Help" aria-label="Open Dashboard help">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Top row: readiness + podium side by side -->
+      <div class="dash-top-row">
+        <div class="adm-card readiness-card">
+          <div class="adm-card-header readiness-card-header">
+            <span class="adm-card-title" data-i18n="dash_readiness_title">Workshop readiness</span>
+            <div class="ctf-timer-chip is-idle" id="status-timer-chip" title="CTF time remaining" style="display:none;">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l2.5 2.5"/><path d="M9 2h6"/></svg>
+              <span class="ctf-timer-val">--:--</span>
+            </div>
+          </div>
+          <div class="status-split">
+            <div class="status-controls">
+              <button class="status-tile" onclick="adminTab('control')">
+                <span class="status-tile-bg"></span>
+                <span class="status-tile-inner">
+                  <span class="ctf-dash-semaphore" id="dash-semaphore">
+                    <span class="ctf-dash-light ctf-dash-stop"    id="dash-light-stop"    title="Stopped" onclick="event.stopPropagation();setCTFState('stop')"></span>
+                    <span class="ctf-dash-light ctf-dash-standby" id="dash-light-standby" onclick="event.stopPropagation();setCTFState('standby')" title="Standby"></span>
+                    <span class="ctf-dash-light ctf-dash-run"     id="dash-light-run"     onclick="event.stopPropagation();setCTFState('run')"     title="Run"></span>
+                  </span>
+                  <span class="status-tile-copy">
+                    <span class="status-tile-name">Capture the Flag</span>
+                    <strong class="status-tile-val" id="dash-ctf-state-text">—</strong>
+                  </span>
+                </span>
+              </button>
+              <button class="status-tile" onclick="adminTab('control')">
+                <span class="status-tile-bg"></span>
+                <span class="status-tile-inner">
+                  <span class="ctf-dash-semaphore" id="dash-reg-semaphore">
+                    <span class="ctf-dash-light reg-dash-closed" id="dash-reg-light-closed" onclick="event.stopPropagation();setRegOpen(false)" title="Close registration"></span>
+                    <span class="ctf-dash-light reg-dash-open"   id="dash-reg-light-open"   onclick="event.stopPropagation();setRegOpen(true)"  title="Open registration"></span>
+                  </span>
+                  <span class="status-tile-copy">
+                    <span class="status-tile-name">Registration</span>
+                    <strong class="status-tile-val" id="dash-reg-state-text">—</strong>
+                  </span>
+                </span>
+              </button>
+            </div>
+            <div class="status-readiness">
+              <button class="status-row" onclick="adminTab('codes')">
+                <span class="status-row-bg"></span>
+                <span class="status-row-ic"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></span>
+                <span class="status-row-name" data-i18n="ready_participants">participants</span>
+                <span class="status-row-val" id="ready-participants-status">—</span>
+              </button>
+              <button class="status-row" onclick="adminTab('prompts')">
+                <span class="status-row-bg"></span>
+                <span class="status-row-ic"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></span>
+                <span class="status-row-name" data-i18n="ready_prompts">Prompt library</span>
+                <span class="status-row-val" id="ready-prompts-status">—</span>
+              </button>
+              <button class="status-row" onclick="adminTab('challenges')">
+                <span class="status-row-bg"></span>
+                <span class="status-row-ic"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" y1="22" x2="4" y2="15"/></svg></span>
+                <span class="status-row-name" data-i18n="ready_challenges">Capture the Flag</span>
+                <span class="status-row-val" id="ready-challenges-status">—</span>
+              </button>
+              <button class="status-row" onclick="adminTab('mcp')">
+                <span class="status-row-bg"></span>
+                <span class="status-row-ic"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/><polyline points="7 8 12 13 17 8"/></svg></span>
+                <span class="status-row-name" data-i18n="ready_mcp">MCP servers</span>
+                <span class="status-row-val" id="ready-mcp-status">—</span>
+              </button>
+              <button class="status-row" onclick="adminTab('aiproviders')">
+                <span class="status-row-bg"></span>
+                <span class="status-row-ic"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/></svg></span>
+                <span class="status-row-name" data-i18n="ready_providers">AI providers</span>
+                <span class="status-row-val" id="ready-providers-status">—</span>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div class="adm-card dashboard-leaderboard-card">
+          <div class="adm-card-header">
+            <span class="adm-card-title">Leaderboard</span>
+            <div style="display:flex;gap:8px;align-items:center;">
+              <button id="award-ceremony-btn" class="btn-primary btn-icon" onclick="showAwardAnimation()">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9L12 4l6 5M3 13h18M5 17h14M7 21h10"/></svg>
+                <span>The CTF Awards Ceremony</span>
+              </button>
+              <button class="btn-secondary btn-icon" onclick="openPodiumFullscreen()">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 3h6v6"/><path d="M9 21H3v-6"/><path d="M21 3l-7 7"/><path d="M3 21l7-7"/></svg>
+                <span>Expand</span>
+              </button>
+            </div>
+          </div>
+          <div id="dash-podium" class="dash-podium"></div>
+        </div>
+
+        <!-- Podium fullscreen overlay -->
+        <div id="podium-overlay" class="podium-overlay" style="display:none;">
+          <div class="podium-overlay-header">
+            <span class="podium-overlay-title">Leaderboard</span>
+            <div style="display:flex;gap:8px;align-items:center;">
+              <button id="podium-autorefresh-btn" class="btn-secondary btn-icon" onclick="togglePodiumAutorefresh()">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                <span>Autorefresh every 30s</span>
+              </button>
+              <button class="btn-secondary btn-icon" onclick="closePodiumFullscreen()">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6L6 18"/><path d="M6 6l12 12"/></svg>
+                <span>Close</span>
+              </button>
+            </div>
+          </div>
+          <div class="podium-fs-body">
+            <div id="dash-podium-fs" class="dash-podium dash-podium--fs"></div>
+            <div class="podium-fs-ranking" id="dash-podium-fs-ranking"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Bottom: participant activity table -->
+      <div class="adm-card standard-list-card">
+        <div class="adm-card-header"><span class="adm-card-title" data-i18n="dash_participant_activity">Participant Activity</span></div>
+        <table class="adm-table">
+          <thead>
+            <tr>
+              <th rowspan="2" style="text-align:center;vertical-align:middle;border-right:2px solid var(--border);"><span data-i18n="col_code">Participant</span></th>
+              <th colspan="3" style="text-align:center;vertical-align:middle;border-right:2px solid var(--border);border-bottom:1px solid var(--border);">Prompts Used</th>
+              <th rowspan="2" style="text-align:center;vertical-align:middle;border-right:2px solid var(--border);">Capture the Flag</th>
+              <th rowspan="2" data-sortable data-col-index="5" data-sort-numeric="true" onclick="sortTable('dash-participants-tbody',this)" style="cursor:pointer;user-select:none;text-align:center;vertical-align:middle;">Points <span class="sort-arrow">⇅</span></th>
+            </tr>
+            <tr>
+              <th style="text-align:center;vertical-align:middle;font-weight:500;">Progress</th>
+              <th style="text-align:center;vertical-align:middle;font-weight:500;">Secured</th>
+              <th style="text-align:center;vertical-align:middle;font-weight:500;border-right:2px solid var(--border);">Direct</th>
+            </tr>
+          </thead>
+          <tbody id="dash-participants-tbody"></tbody>
+        </table>
+      </div>
+
+    </div><!-- /section-dashboard -->
+
+    <!-- ── Students / Access Codes ── -->
+    <div class="admin-section" id="section-codes">
+      <div class="adm-card standard-product-card">
+        <div class="standard-product-hero">
+          <div class="standard-product-copy">
+            <span class="standard-product-kicker">Workshop roster</span>
+            <h2 data-i18n="participants_title">Participants</h2>
+            <p>Provision accounts, monitor usage and track CTF progress.</p>
+          </div>
+          <div class="standard-hero-actions participants-hero-actions">
+            <button class="standard-icon-tile" onclick="openBulkParticipantsModal()" data-i18n-title="participants_bulk_create" title="Bulk-create participants with random names" aria-label="Bulk-create participants with random names">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M19 8v6"/><path d="M22 11h-6"/></svg>
+            </button>
+            <button class="standard-help-tile" onclick="openHelpSidebar('participants')" title="Open Help" aria-label="Open Participants help">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
+            </button>
+          </div>
+        </div>
+      </div>
+      <div class="adm-card standard-list-card">
+        <div class="adm-card-header"><span class="adm-card-title" data-i18n="participants_all_card">All participants</span></div>
+        <table class="adm-table">
+          <thead>
+            <tr>
+              <th rowspan="2" data-sortable onclick="sortTable('codes-tbody',this)" style="cursor:pointer;user-select:none;text-align:center;vertical-align:middle;border-right:2px solid var(--border);">Participant <span class="sort-arrow">⇅</span></th>
+              <th rowspan="2" style="text-align:center;vertical-align:middle;border-right:2px solid var(--border);" data-i18n="col_token_group">Token Group</th>
+              <th colspan="4" style="text-align:center;vertical-align:middle;border-left:2px solid var(--border);border-right:2px solid var(--border);border-bottom:1px solid var(--border);">Prompts Used</th>
+              <th colspan="3" style="text-align:center;vertical-align:middle;border-right:2px solid var(--border);border-bottom:1px solid var(--border);">Capture the Flag</th>
+              <th colspan="2" style="text-align:center;vertical-align:middle;border-right:2px solid var(--border);border-bottom:1px solid var(--border);">Policies in Netskope</th>
+              <th rowspan="2" style="text-align:center;vertical-align:middle;">
+                <span class="participant-table-header-action">
+                  <span>Delete</span>
+                  <button class="participant-table-all-btn participant-table-all-btn--danger" onclick="deleteAllParticipants(this)" title="Delete all participants" aria-label="Delete all participants" data-i18n-title="participants_delete_all" data-i18n-aria-label="participants_delete_all">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M3 6h18"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/></svg>
+                  </button>
+                </span>
+              </th>
+            </tr>
+            <tr>
+              <th style="text-align:center;vertical-align:middle;font-weight:500;border-left:2px solid var(--border);">Progress</th>
+              <th style="text-align:center;vertical-align:middle;font-weight:500;">Secured</th>
+              <th style="text-align:center;vertical-align:middle;font-weight:500;">Direct</th>
+              <th style="text-align:center;vertical-align:middle;font-weight:500;border-right:2px solid var(--border);">
+                <span class="participant-table-header-action">
+                  <span>Reset</span>
+                  <button class="participant-table-all-btn" onclick="resetAllPrompts(this)" title="Reset all prompt counters" aria-label="Reset all prompt counters" data-i18n-title="dash_reset_counters" data-i18n-aria-label="dash_reset_counters">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3"><path d="M3 12a9 9 0 1 0 3-6.7"/><path d="M3 3v6h6"/></svg>
+                  </button>
+                </span>
+              </th>
+              <th style="text-align:center;vertical-align:middle;font-weight:500;">Progress</th>
+              <th style="text-align:center;vertical-align:middle;font-weight:500;">Detail</th>
+              <th style="text-align:center;vertical-align:middle;font-weight:500;border-right:2px solid var(--border);">
+                <span class="participant-table-header-action">
+                  <span>Reset</span>
+                  <button class="participant-table-all-btn" onclick="resetAllChallenges(this)" title="Reset full CTF progress for all participants" aria-label="Reset all CTF progress">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3"><path d="M3 12a9 9 0 1 0 3-6.7"/><path d="M3 3v6h6"/></svg>
+                  </button>
+                </span>
+              </th>
+              <th style="text-align:center;vertical-align:middle;font-weight:500;">
+                <span class="participant-table-header-action">
+                  <span>Add</span>
+                  <button class="participant-table-all-btn" onclick="bulkAddNetskopePolicy(this)" title="Create all sample policies for all participants in Netskope" aria-label="Create all sample policies for all participants in Netskope" data-i18n-title="participants_create_all_policies" data-i18n-aria-label="participants_create_all_policies">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M14 2H7a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7z"/><path d="M14 2v5h5"/><path d="M12 11v6"/><path d="M9 14h6"/></svg>
+                  </button>
+                </span>
+              </th>
+              <th style="text-align:center;vertical-align:middle;font-weight:500;border-right:2px solid var(--border);">
+                <span class="participant-table-header-action">
+                  <span>Delete</span>
+                  <button class="participant-table-all-btn participant-table-all-btn--danger-soft" onclick="bulkDeleteNetskopePolicy(this)" title="Delete all sample policies for all participants in Netskope" aria-label="Delete all sample policies for all participants in Netskope" data-i18n-title="participants_delete_all_policies" data-i18n-aria-label="participants_delete_all_policies">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M14 2H7a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7z"/><path d="M14 2v5h5"/><path d="M15 12l-6 6"/><path d="M9 12l6 6"/></svg>
+                  </button>
+                </span>
+              </th>
+            </tr>
+          </thead>
+          <tbody id="codes-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ── Prompt Library ── -->
+    <div class="admin-section" id="section-prompts">
+      <div class="adm-card standard-product-card">
+        <div class="standard-product-hero">
+          <div class="standard-product-copy">
+            <span class="standard-product-kicker">Shared prompt catalogue</span>
+            <h2 data-i18n="prompts_title">Prompt Library</h2>
+            <p>Maintain reusable workshop prompts that participants can open from the chat experience and send without typing manually.</p>
+          </div>
+          <div class="standard-hero-actions prompts-hero-actions">
+            <input type="file" id="prompt-csv-input" accept=".csv,text/csv" style="display:none;" onchange="importPromptCsv(this)" />
+            <button class="standard-icon-tile" onclick="document.getElementById('prompt-csv-input').click()" title="Import CSV" aria-label="Import CSV">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M7 10l5 5 5-5"/><path d="M12 15V3"/></svg>
+            </button>
+            <button class="standard-icon-tile" onclick="exportPromptCsv()" title="Export CSV" aria-label="Export CSV">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M17 8l-5-5-5 5"/><path d="M12 3v12"/></svg>
+            </button>
+            <button class="standard-icon-tile" onclick="wizSyncPromptTemplate()" title="Sync template from cloud" aria-label="Sync template from cloud">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 2v6h-6"/><path d="M3 12a9 9 0 0 1 15-6.7L21 8"/><path d="M3 22v-6h6"/><path d="M21 12a9 9 0 0 1-15 6.7L3 16"/></svg>
+            </button>
+            <button class="standard-help-tile" onclick="openHelpSidebar('prompts')" title="Open Help" aria-label="Open Prompt Library help">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
+            </button>
+          </div>
+        </div>
+      </div>
+      <div class="adm-card standard-list-card">
+        <div class="adm-card-header">
+          <span class="adm-card-title" data-i18n="prompts_all_card">All prompts</span>
+          <button onclick="toggleNewPromptRow()" id="btn-add-prompt" title="Add prompt" style="margin-left:auto;display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;border-radius:6px;border:1px solid var(--accent);background:var(--accent-glow);color:var(--accent);font-size:16px;font-weight:600;cursor:pointer;line-height:1;">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14"/><path d="M5 12h14"/></svg>
+          </button>
+        </div>
+        <table class="adm-table prompt-admin-table" style="table-layout:fixed;width:100%;">
+          <colgroup>
+            <col style="width:4%;" />
+            <col style="width:5%;" />
+            <col />
+            <col style="width:8%;" />
+            <col style="width:8%;" />
+            <col style="width:8%;" />
+          </colgroup>
+          <thead>
+            <tr>
+              <th rowspan="2" style="text-align:center;vertical-align:middle;"></th>
+              <th rowspan="2" style="text-align:center;vertical-align:middle;border-right:2px solid var(--border);">SEQ</th>
+              <th rowspan="2" style="vertical-align:middle;border-right:2px solid var(--border);" data-i18n="prompts_label_text">Prompt text</th>
+              <th colspan="3" style="text-align:center;vertical-align:middle;border-bottom:1px solid var(--border);" data-i18n="col_actions">Actions</th>
+            </tr>
+            <tr>
+              <th style="text-align:center;vertical-align:middle;font-weight:500;" data-i18n="btn_edit">Edit</th>
+              <th style="text-align:center;vertical-align:middle;font-weight:500;">
+                <span class="participant-table-header-action">
+                  <span data-i18n="btn_delete">Delete</span>
+                  <button class="participant-table-all-btn participant-table-all-btn--danger" onclick="deleteAllPrompts()" title="Delete all prompts">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M3 6h18"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/></svg>
+                  </button>
+                </span>
+              </th>
+              <th style="text-align:center;vertical-align:middle;font-weight:500;">
+                <span class="participant-table-header-action">
+                  <span data-i18n="col_visible">Visible</span>
+                  <button class="participant-table-all-btn" onclick="toggleAllPromptsVisible()" title="Toggle visibility for all prompts" id="prompt-toggle-all-btn">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                  </button>
+                </span>
+              </th>
+            </tr>
+          </thead>
+          <tbody id="new-prompt-tbody"></tbody>
+          <tbody id="prompts-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ── Control Center (CTF live controls) ── -->
+    <div class="admin-section" id="section-control">
+      <div class="adm-card standard-product-card">
+        <div class="standard-product-hero">
+          <div class="standard-product-copy">
+            <span class="standard-product-kicker">Live workshop operations</span>
+            <h2 data-i18n="nav_control_center">Control Center</h2>
+            <p>Run the CTF session, control participant-facing visibility, manage registration and tune workshop limits from one operational surface.</p>
+          </div>
+          <div class="standard-hero-actions control-hero-actions">
+            <button class="standard-help-tile" onclick="openHelpSidebar('control')" title="Open Help" aria-label="Open Control Center help">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div class="cc-control-layout">
+        <div class="cc-semaphore-row">
+        <div class="adm-card challenge-overview-card" id="ctf-state-card">
+          <span class="status-tile-bg"></span>
+          <div class="adm-card-header">
+            <span class="adm-card-title">Capture the Flag</span>
+          </div>
+          <div class="adm-card-body">
+            <div class="challenge-control-panel">
+              <div class="ctf-dash-info">
+                <span class="ctf-dash-title">Status</span>
+                <span class="ctf-dash-status-line"><strong id="ctf-state-text">—</strong></span>
+              </div>
+              <div class="ctf-dash-semaphore challenge-panel-semaphore" id="ctf-state-control">
+                <button class="ctf-dash-light ctf-dash-stop" id="ctf-panel-light-stop" onclick="setCTFState('stop')" title="Stop Capture the Flag" aria-label="Stop Capture the Flag"></button>
+                <button class="ctf-dash-light ctf-dash-standby" id="ctf-panel-light-standby" onclick="setCTFState('standby')" title="Standby Capture the Flag" aria-label="Standby Capture the Flag"></button>
+                <button class="ctf-dash-light ctf-dash-run" id="ctf-panel-light-run" onclick="setCTFState('run')" title="Run Capture the Flag" aria-label="Run Capture the Flag"></button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="adm-card challenge-overview-card" id="leaderboard-visible-card">
+          <span class="status-tile-bg"></span>
+          <div class="adm-card-header">
+            <span class="adm-card-title">Leaderboard</span>
+          </div>
+          <div class="adm-card-body">
+            <div class="challenge-control-panel">
+              <div class="ctf-dash-info">
+                <span class="ctf-dash-title">Participants</span>
+                <span class="ctf-dash-status-line"><strong id="lb-visible-label">—</strong></span>
+              </div>
+              <div class="ctf-dash-semaphore challenge-panel-semaphore challenge-panel-semaphore--registration">
+                <button class="ctf-dash-light reg-dash-closed" id="lb-panel-light-hidden" onclick="setLeaderboardVisible(false)" title="Hide leaderboard from participants" aria-label="Hide leaderboard from participants"></button>
+                <button class="ctf-dash-light reg-dash-open" id="lb-panel-light-visible" onclick="setLeaderboardVisible(true)" title="Show leaderboard to participants" aria-label="Show leaderboard to participants"></button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="adm-card challenge-overview-card" id="reg-open-card">
+          <span class="status-tile-bg"></span>
+          <div class="adm-card-header">
+            <span class="adm-card-title">Registration</span>
+          </div>
+          <div class="adm-card-body">
+            <input type="checkbox" id="reg-open-toggle" onchange="setRegOpen(this.checked)" hidden />
+            <div class="challenge-control-panel">
+              <div class="ctf-dash-info">
+                <span class="ctf-dash-title">Status</span>
+                <span class="ctf-dash-status-line"><strong id="reg-open-toggle-label">—</strong></span>
+              </div>
+              <div class="ctf-dash-semaphore challenge-panel-semaphore challenge-panel-semaphore--registration">
+                <button class="ctf-dash-light reg-dash-closed" id="reg-panel-light-closed" onclick="setRegOpen(false)" title="Close registration" aria-label="Close registration"></button>
+                <button class="ctf-dash-light reg-dash-open" id="reg-panel-light-open" onclick="setRegOpen(true)" title="Open registration" aria-label="Open registration"></button>
+              </div>
+            </div>
+          </div>
+        </div>
+        </div><!-- /cc-semaphore-row -->
+
+        <div class="cc-ops-row">
+        <div class="ctf-timer-banner is-idle" id="ctf-timer-banner">
+          <div class="adm-card-header ctf-timer-card-header">
+            <span class="adm-card-title">CTF TIMER</span>
+          </div>
+          <div class="ctf-timer-content">
+            <div class="ctf-timer-main">
+              <div class="ctf-timer-head">
+                <span class="ctf-timer-icon-shell">
+                  <svg class="ctf-timer-banner-ic" width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l2.5 2.5"/><path d="M9 2h6"/></svg>
+                </span>
+                <div>
+                  <div class="ctf-timer-display" id="ctf-timer-display">--:--:--</div>
+                  <div class="ctf-timer-status" id="ctf-timer-status">No timer set — the clock runs only while Capture the Flag is on Run.</div>
+                </div>
+              </div>
+              <div class="ctf-timer-ring" id="ctf-timer-track" role="progressbar" aria-label="CTF timer remaining" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
+                <span id="ctf-timer-progress"></span>
+                <strong id="ctf-timer-percent">--</strong>
+              </div>
+            </div>
+            <div class="ctf-timer-quickrow">
+              <div class="ctf-timer-preset-group">
+                <button class="ctf-qbtn" onclick="ctfTimerPreset(900)">15m</button>
+                <button class="ctf-qbtn" onclick="ctfTimerPreset(1800)">30m</button>
+                <button class="ctf-qbtn" onclick="ctfTimerPreset(2700)">45m</button>
+                <button class="ctf-qbtn" onclick="ctfTimerPreset(3600)">1h</button>
+              </div>
+              <div class="ctf-timer-adjust-group">
+                <button class="ctf-qbtn" onclick="ctfTimerAdjust(-300)" title="Subtract 5 minutes">-5m</button>
+                <button class="ctf-qbtn" onclick="ctfTimerAdjust(300)" title="Add 5 minutes">+5m</button>
+                <button class="ctf-qbtn ctf-qbtn-reset" onclick="ctfTimerReset()" title="Reset to configured time">↺</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="adm-card challenge-overview-card" id="reg-code-card">
+          <div class="adm-card-header">
+            <span class="adm-card-title">Registration Code</span>
+          </div>
+          <div class="adm-card-body">
+            <div class="reg-code-panel">
+              <div class="reg-code-display">
+                <span class="reg-code-text" id="reg-code-input-admin">—</span>
+                <input class="adm-inline-input reg-code-input reg-code-edit-field" id="reg-code-edit-field" placeholder="enter-code-here" style="display:none;" />
+                <div class="reg-code-action-bar">
+                  <button class="row-icon-btn" id="reg-code-copy-btn" onclick="copyRegCode()" title="Copy" aria-label="Copy registration code">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+                  </button>
+                  <button class="row-icon-btn row-icon-btn--policy" id="reg-code-edit-btn" onclick="toggleRegCodeEdit()" title="Edit" aria-label="Edit registration code">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
+                  </button>
+                </div>
+              </div>
+              <div class="admin-action-status reg-code-status" id="reg-code-status"></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="adm-card challenge-overview-card control-limits-card">
+          <div class="adm-card-header">
+            <span class="adm-card-title">Workshop Limits</span>
+          </div>
+          <div class="settings-card-body">
+            <div class="settings-limit-grid">
+              <div class="field-group">
+                <label>Prompts per participant</label>
+                <input type="number" id="admin-max-prompts" min="1" value="100" />
+              </div>
+              <div class="field-group">
+                <label>Retries per challenge</label>
+                <input type="number" id="admin-max-retries" min="0" value="5" />
+              </div>
+            </div>
+            <span class="field-hint">Set retries to 0 for unlimited attempts.</span>
+            <span id="max-prompts-msg" class="settings-save-msg" style="display:none;">Saved!</span>
+            <span id="max-retries-msg" class="settings-save-msg" style="display:none;">Saved!</span>
+            <div class="settings-compact-actions">
+              <span id="workshop-limits-msg" class="settings-inline-status"></span>
+              <button class="btn-primary btn-icon" onclick="saveWorkshopLimits()">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+                Save
+              </button>
+            </div>
+          </div>
+        </div>
+        </div><!-- /cc-ops-row -->
+      </div><!-- /cc-control-layout -->
+
+      <div class="cc-section-label" data-i18n="control_quick_actions">Quick actions</div>
+      <div class="cc-actions">
+        <button class="cc-action cc-action--primary" onclick="showAwardAnimation()">
+          <span class="cc-action-ic">🏆</span>
+          <div><div class="cc-action-title" data-i18n="control_action_ceremony">Launch Award Ceremony</div><div class="cc-action-desc" data-i18n="control_action_ceremony_desc">Fullscreen ranking reveal with music — for the prize-giving moment.</div></div>
+        </button>
+        <button class="cc-action cc-action--lb" onclick="openPodiumFullscreen()">
+          <span class="cc-action-ic"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 3h6v6"/><path d="M9 21H3v-6"/><path d="M21 3l-7 7"/><path d="M3 21l7-7"/></svg></span>
+          <div><div class="cc-action-title" data-i18n="control_action_leaderboard">Open Leaderboard</div><div class="cc-action-desc" data-i18n="control_action_leaderboard_desc">Fullscreen live ranking to project during the workshop.</div></div>
+        </button>
+        <button class="cc-action cc-action--danger" onclick="resetAllChallenges(this)">
+          <span class="cc-action-ic"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-3.5"/></svg></span>
+          <div><div class="cc-action-title" data-i18n="control_action_reset">Reset CTF progress</div><div class="cc-action-desc" data-i18n="control_action_reset_desc">Clears every participant's completions, points and penalties. Cannot be undone.</div></div>
+        </button>
+      </div>
+    </div>
+
+    <!-- ── Challenges ── -->
+    <div class="admin-section" id="section-challenges">
+      <div class="adm-card standard-product-card">
+        <div class="standard-product-hero">
+          <div class="standard-product-copy">
+            <span class="standard-product-kicker">Capture the Flag content</span>
+            <h2 data-i18n="nav_challenges">Challenges</h2>
+            <p>Create and manage CTF exercises and completion rules.</p>
+          </div>
+          <div class="standard-hero-actions challenges-hero-actions">
+            <label class="standard-icon-tile challenge-import-btn" title="Import CSV" aria-label="Import CSV">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M7 10l5 5 5-5"/><path d="M12 15V3"/></svg>
+              <input type="file" accept=".csv" style="display:none" onchange="importChallengesCSV(event)">
+            </label>
+            <button class="standard-icon-tile" onclick="exportChallengesCSV()" title="Export CSV" aria-label="Export CSV">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M17 8l-5-5-5 5"/><path d="M12 3v12"/></svg>
+            </button>
+            <button class="standard-icon-tile" onclick="wizSyncChallengesTemplate()" title="Sync template from cloud" aria-label="Sync template from cloud">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 2v6h-6"/><path d="M3 12a9 9 0 0 1 15-6.7L21 8"/><path d="M3 22v-6h6"/><path d="M21 12a9 9 0 0 1-15 6.7L3 16"/></svg>
+            </button>
+            <button class="standard-help-tile" onclick="openHelpSidebar('challenges')" title="Open Help" aria-label="Open Challenges help">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div class="adm-card standard-list-card">
+        <div class="adm-card-header">
+          <span class="adm-card-title">All challenges</span>
+          <div style="margin-left:auto;display:inline-flex;align-items:center;gap:6px;">
+            <button class="participant-table-all-btn" onclick="expandAllChallenges()" title="Expand all" style="width:26px;height:26px;">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
+            </button>
+            <button class="participant-table-all-btn" onclick="collapseAllChallenges()" title="Collapse all" style="width:26px;height:26px;">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="18 15 12 9 6 15"/></svg>
+            </button>
+            <button onclick="toggleNewChallengeRow()" id="btn-add-challenge" title="Add challenge" style="display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;border-radius:6px;border:1px solid var(--accent);background:var(--accent-glow);color:var(--accent);font-size:16px;font-weight:600;cursor:pointer;line-height:1;">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14"/><path d="M5 12h14"/></svg>
+            </button>
+          </div>
+        </div>
+        <table class="adm-table challenge-admin-table" id="challenges-table">
+          <colgroup>
+            <col style="width:4%;" />
+            <col style="width:5%;" />
+            <col class="challenge-col-label" />
+            <col class="challenge-col-value" />
+            <col style="width:8%;" />
+            <col style="width:8%;" />
+            <col style="width:8%;" />
+          </colgroup>
+          <thead>
+            <tr>
+              <th rowspan="2" style="text-align:center;vertical-align:middle;"></th>
+              <th rowspan="2" style="text-align:center;border-right:2px solid var(--border);">SEQ</th>
+              <th colspan="2" rowspan="2" style="border-right:2px solid var(--border);">Challenge</th>
+              <th colspan="3" style="text-align:center;border-bottom:1px solid var(--border);">Actions</th>
+            </tr>
+            <tr>
+              <th style="text-align:center;">Edit</th>
+              <th style="text-align:center;">
+                <span class="participant-table-header-action">
+                  <span>Delete</span>
+                  <button class="participant-table-all-btn participant-table-all-btn--danger" onclick="deleteAllChallenges()" title="Delete all challenges">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M3 6h18"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/></svg>
+                  </button>
+                </span>
+              </th>
+              <th style="text-align:center;">
+                <span class="participant-table-header-action">
+                  <span>Visible</span>
+                  <button class="participant-table-all-btn" onclick="toggleAllChallengesVisible()" title="Toggle visibility for all challenges" id="challenge-toggle-all-btn">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                  </button>
+                </span>
+              </th>
+            </tr>
+          </thead>
+          <tbody id="new-challenge-tbody"></tbody>
+          <tbody id="challenges-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="admin-section" id="section-apikeys">
+      <div class="adm-card resource-product-card">
+        <div class="resource-product-hero">
+          <div class="resource-product-copy">
+            <span class="resource-product-kicker">Netskope tokens</span>
+            <h2 data-i18n="tokens_title">AI Gateway Tokens</h2>
+            <p>Review AI Gateway token groups, token values, assignment status and expiry for the participant access layer.</p>
+          </div>
+          <div class="standard-hero-actions tokens-hero-actions">
+            <button class="standard-icon-tile" onclick="netskopeSync()" id="btn-sync" title="Sync from Netskope" aria-label="Sync from Netskope">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 2v6h-6"/><path d="M3 12a9 9 0 0 1 15-6.7L21 8"/><path d="M3 22v-6h6"/><path d="M21 12a9 9 0 0 1-15 6.7L3 16"/></svg>
+              <span class="visually-hidden" id="sync-label" data-i18n="tokens_sync">Sync from Netskope</span>
+            </button>
+            <button class="resource-help-tile" onclick="openHelpSidebar('gwtokens')" title="Open Help" aria-label="Open GW Tokens help">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div id="sync-banner" style="display:none;margin-bottom:16px;padding:10px 14px;border-radius:var(--radius-sm);font-size:12px;"></div>
+
+      <div class="adm-card resource-list-card">
+        <div class="adm-card-header"><span class="adm-card-title" data-i18n="tokens_all_card">All tokens</span></div>
+        <table class="adm-table resource-admin-table" style="table-layout:fixed;width:100%;">
+          <colgroup>
+            <col style="width:19%;" />
+            <col style="width:19%;" />
+            <col style="width:26%;" />
+            <col style="width:11%;" />
+            <col style="width:14%;" />
+            <col style="width:11%;" />
+          </colgroup>
+          <thead>
+            <tr>
+              <th data-sortable onclick="sortTable('apikeys-tbody',this)" style="cursor:pointer;user-select:none;"><span data-i18n="col_token_group">Token Group</span> <span class="sort-arrow">⇅</span></th>
+              <th data-i18n="col_token_name">Token Name</th>
+              <th data-i18n="col_token_value">Token Value</th>
+              <th data-i18n="col_status">Status</th>
+              <th data-i18n="col_assigned_to">Assigned to</th>
+              <th data-i18n="col_expires">Expires</th>
+            </tr>
+          </thead>
+          <tbody id="apikeys-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ── Conversations ── -->
+    <div class="admin-section" id="section-conversations">
+      <div class="adm-card standard-product-card">
+        <div class="standard-product-hero">
+          <div class="standard-product-copy">
+            <span class="standard-product-kicker">Interaction audit</span>
+            <h2 data-i18n="convs_title">Conversations</h2>
+            <p>Inspect participant conversations, message counts and last activity without entering the participant chat experience.</p>
+          </div>
+          <div class="standard-hero-actions conversations-hero-actions">
+            <button class="standard-help-tile" onclick="openHelpSidebar('conversations')" title="Open Help" aria-label="Open Conversations help">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
+            </button>
+          </div>
+        </div>
+      </div>
+      <div class="adm-card standard-list-card">
+        <div class="adm-card-header"><span class="adm-card-title">All conversations</span></div>
+        <div id="conv-users-view">
+          <table class="adm-table">
+            <thead>
+              <tr>
+                <th rowspan="2" data-sortable onclick="sortTable('conv-users-tbody',this)" style="cursor:pointer;user-select:none;text-align:center;vertical-align:middle;border-right:2px solid var(--border);">Participant <span class="sort-arrow">⇅</span></th>
+                <th colspan="3" style="text-align:center;vertical-align:middle;border-right:2px solid var(--border);border-bottom:1px solid var(--border);">Conversation Activity</th>
+                <th colspan="2" style="text-align:center;vertical-align:middle;border-bottom:1px solid var(--border);" data-i18n="col_actions">Actions</th>
+              </tr>
+              <tr>
+                <th style="text-align:center;vertical-align:middle;font-weight:500;" data-i18n="col_conversations">Conversations</th>
+                <th style="text-align:center;vertical-align:middle;font-weight:500;" data-i18n="col_messages">Messages</th>
+                <th style="text-align:center;vertical-align:middle;font-weight:500;border-right:2px solid var(--border);" data-i18n="col_last_activity">Last activity</th>
+                <th style="text-align:center;vertical-align:middle;font-weight:500;">Detail</th>
+                <th style="text-align:center;vertical-align:middle;font-weight:500;">
+                  <span class="participant-table-header-action">
+                    <span>Delete</span>
+                    <button class="participant-table-all-btn participant-table-all-btn--danger" onclick="deleteAllConversations()" title="Delete all conversations" aria-label="Delete all conversations">
+                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M3 6h18"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/></svg>
+                    </button>
+                  </span>
+                </th>
+              </tr>
+            </thead>
+            <tbody id="conv-users-tbody"></tbody>
+          </table>
+        </div>
+        <div id="conv-detail-view" style="display:none;">
+          <div class="adm-card-body" style="border-bottom:1px solid var(--border);">
+            <div style="display:flex;align-items:center;gap:12px;">
+              <button class="btn-secondary" onclick="showUserList()" data-i18n="convs_back">← Back</button>
+              <h3 id="conv-detail-title" style="font-size:15px;font-weight:600;"></h3>
+            </div>
+          </div>
+          <table class="adm-table">
+            <thead>
+              <tr>
+                <th rowspan="2" data-sortable onclick="sortTable('conv-detail-tbody',this)" style="cursor:pointer;user-select:none;text-align:center;vertical-align:middle;border-right:2px solid var(--border);"><span data-i18n="col_title">Title</span> <span class="sort-arrow">⇅</span></th>
+                <th colspan="2" style="text-align:center;vertical-align:middle;border-right:2px solid var(--border);border-bottom:1px solid var(--border);">Conversation Activity</th>
+                <th colspan="2" style="text-align:center;vertical-align:middle;border-bottom:1px solid var(--border);" data-i18n="col_actions">Actions</th>
+              </tr>
+              <tr>
+                <th style="text-align:center;vertical-align:middle;font-weight:500;" data-i18n="col_messages">Messages</th>
+                <th style="text-align:center;vertical-align:middle;font-weight:500;border-right:2px solid var(--border);" data-i18n="col_last_activity">Last activity</th>
+                <th style="text-align:center;vertical-align:middle;font-weight:500;">Detail</th>
+                <th style="text-align:center;vertical-align:middle;font-weight:500;">
+                  <span class="participant-table-header-action">
+                    <span>Delete</span>
+                    <button class="participant-table-all-btn participant-table-all-btn--danger" onclick="deleteUserConvs()" title="Delete all chats for this user" aria-label="Delete all chats for this user">
+                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M3 6h18"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/></svg>
+                    </button>
+                  </span>
+                </th>
+              </tr>
+            </thead>
+            <tbody id="conv-detail-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── Admins ── -->
+    <div class="admin-section" id="section-admins">
+      <div class="adm-card admin-product-card">
+        <div class="admin-product-hero">
+          <div class="admin-product-copy">
+            <span class="admin-product-kicker">Administration</span>
+            <h2>Admin access management</h2>
+            <p>Create and manage instructor accounts with full control panel access.</p>
+          </div>
+          <div class="standard-hero-actions admins-hero-actions">
+            <button class="admin-help-tile" onclick="openHelpSidebar('admins')" title="Open Help" aria-label="Open Admins help">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div class="adm-card admin-create-panel">
+        <div class="admin-create-copy">
+          <strong>Add admin</strong>
+          <span>A random password and API token are generated automatically on creation.</span>
+        </div>
+        <div class="admin-create-workspace">
+          <div class="admin-create-fields">
+            <input type="text" id="new-admin-code" placeholder="Username (5-12 chars)" maxlength="12" />
+            <input type="text" id="new-admin-label" placeholder="Display name (optional)" />
+          </div>
+          <div class="admin-form-actions">
+            <button class="btn-primary btn-icon admin-primary-action" onclick="createAdmin()">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 5v14"/><path d="M5 12h14"/></svg>
+              Create
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div class="adm-card admin-list-card">
+        <div class="adm-card-header">
+          <span class="adm-card-title">All admins</span>
+        </div>
+        <table class="adm-table" style="table-layout:fixed;width:100%;">
+          <colgroup>
+            <col style="width:22%;" />
+            <col style="width:28%;" />
+            <col style="width:10%;" />
+            <col style="width:10%;" />
+            <col style="width:10%;" />
+            <col style="width:10%;" />
+            <col style="width:10%;" />
+          </colgroup>
+          <thead>
+            <tr>
+              <th rowspan="2" style="vertical-align:middle;border-right:2px solid var(--border);">Username</th>
+              <th rowspan="2" style="vertical-align:middle;border-right:2px solid var(--border);">Display name</th>
+              <th rowspan="2" style="vertical-align:middle;text-align:center;border-right:2px solid var(--border);">Status</th>
+              <th colspan="4" style="text-align:center;vertical-align:middle;border-bottom:1px solid var(--border);">Actions</th>
+            </tr>
+            <tr>
+              <th style="text-align:center;vertical-align:middle;font-weight:500;">Token</th>
+              <th style="text-align:center;vertical-align:middle;font-weight:500;">Password</th>
+              <th style="text-align:center;vertical-align:middle;font-weight:500;">
+                <span class="participant-table-header-action">
+                  <span>Disable</span>
+                  <button class="participant-table-all-btn" onclick="disableAllAdmins()" title="Disable all (except ADMIN-2026)">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="12" cy="12" r="10"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
+                  </button>
+                </span>
+              </th>
+              <th style="text-align:center;vertical-align:middle;font-weight:500;">
+                <span class="participant-table-header-action">
+                  <span>Delete</span>
+                  <button class="participant-table-all-btn participant-table-all-btn--danger" onclick="deleteAllAdmins()" title="Delete all (except ADMIN-2026)">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M3 6h18"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/></svg>
+                  </button>
+                </span>
+              </th>
+            </tr>
+          </thead>
+          <tbody id="admins-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ── MCP Servers ── -->
+    <div class="admin-section" id="section-mcp">
+      <div class="adm-card resource-product-card">
+        <div class="resource-product-hero">
+          <div class="resource-product-copy">
+            <span class="resource-product-kicker">Tool access</span>
+            <h2>MCP Servers</h2>
+            <p>Sync MCP servers from your Netskope tenant and decide which tools are visible to workshop participants.</p>
+          </div>
+          <div class="standard-hero-actions mcp-hero-actions">
+            <button class="standard-icon-tile" id="retrieve-mcp-btn" onclick="retrieveMcpServers()" title="Sync from Netskope" aria-label="Sync from Netskope">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 2v6h-6"/><path d="M3 12a9 9 0 0 1 15-6.7L21 8"/><path d="M3 22v-6h6"/><path d="M21 12a9 9 0 0 1-15 6.7L3 16"/></svg>
+              <span class="visually-hidden" id="sync-mcp-label">Sync from Netskope</span>
+            </button>
+            <button class="resource-help-tile" onclick="openHelpSidebar('mcp')" title="Open Help" aria-label="Open MCP Servers help">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
+            </button>
+          </div>
+        </div>
+      </div>
+      <div class="adm-card resource-list-card">
+        <div class="adm-card-header">
+          <span class="adm-card-title">MCP Servers in Netskope tenant</span>
+        </div>
+        <table class="adm-table resource-admin-table" style="table-layout:fixed;width:100%;">
+          <colgroup>
+            <col style="width:34%;" />
+            <col style="width:34%;" />
+            <col style="width:20%;" />
+            <col style="width:12%;" />
+          </colgroup>
+          <thead>
+            <tr>
+              <th rowspan="2" style="vertical-align:middle;">Name</th>
+              <th rowspan="2" style="vertical-align:middle;">Host</th>
+              <th rowspan="2" style="vertical-align:middle;border-right:2px solid var(--border);">Type</th>
+              <th style="text-align:center;vertical-align:middle;border-bottom:1px solid var(--border);" data-i18n="col_actions">Actions</th>
+            </tr>
+            <tr>
+              <th style="text-align:center;vertical-align:middle;font-weight:500;">
+                <span class="participant-table-header-action">
+                  <span data-i18n="col_visible">Visible</span>
+                  <button class="participant-table-all-btn" onclick="toggleAllMcpVisible()" title="Show all MCP servers" aria-label="Show all MCP servers" id="mcp-toggle-all-btn">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                  </button>
+                </span>
+              </th>
+            </tr>
+          </thead>
+          <tbody id="mcp-servers-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ── Settings ── -->
+    <div class="admin-section" id="section-settings">
+      <div class="adm-card settings-product-card">
+        <div class="settings-product-hero">
+          <div class="settings-product-copy">
+            <span class="settings-product-kicker">Workshop configuration</span>
+            <h2>Global operating settings</h2>
+            <p>Configure tenant connectivity, shared gateway routing and cloud template sources for this lab environment.</p>
+          </div>
+          <div class="standard-hero-actions settings-hero-actions">
+            <button class="settings-help-tile" onclick="openHelpSidebar('settings')" title="Open Help" aria-label="Open Global Settings help">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
+            </button>
+          </div>
+        </div>
+      </div>
+      <div class="settings-console">
+        <div class="settings-settings-group settings-settings-group--connectivity">
+        <div class="adm-card settings-console-card">
+          <div class="adm-card-header">
+            <span class="adm-card-title" data-i18n="settings_tenant_card">Netskope Tenant</span>
+          </div>
+          <div class="settings-card-body">
+            <div class="field-group">
+              <label data-i18n="settings_tenant_hostname">Tenant hostname</label>
+              <input type="text" id="ns-tenant" placeholder="yourcompany.goskope.com" />
+            </div>
+            <div class="field-group">
+              <label data-i18n="settings_api_token_label">API Token</label>
+              <input type="password" id="ns-api-token" placeholder="Paste token to update" autocomplete="off" data-1p-ignore data-lpignore="true" data-form-type="other" />
+            </div>
+            <div class="settings-compact-actions">
+              <span id="ns-save-msg" class="settings-inline-status" style="display:none;"></span>
+              <button class="btn-secondary btn-icon" onclick="testNetskopeConnection()">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
+                <span data-i18n="btn_test">Test</span>
+              </button>
+              <button class="btn-primary btn-icon" onclick="saveNetskopeSettings()">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+                Save
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div class="adm-card settings-console-card">
+          <div class="adm-card-header">
+            <span class="adm-card-title" data-i18n="settings_gw_card">Netskope AI Gateway</span>
+          </div>
+          <div class="settings-card-body">
+            <div class="field-group">
+              <label data-i18n="settings_gw_url_label">Gateway URL</label>
+              <input type="text" id="admin-gateway-url" placeholder="http://aigateway.lab:8080" />
+              <span class="field-hint">Shared with all participants.</span>
+            </div>
+            <div class="settings-compact-actions">
+              <span id="gateway-test-msg" class="settings-inline-status" style="display:none;"></span>
+              <span id="gateway-save-msg" class="settings-save-msg settings-inline-status">Saved!</span>
+              <button class="btn-secondary btn-icon" onclick="testGatewayUrl()">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
+                <span data-i18n="btn_test">Test</span>
+              </button>
+              <button class="btn-primary btn-icon" onclick="saveGatewayUrl()">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+                Save
+              </button>
+            </div>
+          </div>
+        </div>
+        </div>
+
+        <div class="settings-settings-group settings-settings-group--templates">
+        <div class="adm-card settings-console-card">
+          <div class="adm-card-header">
+            <span class="adm-card-title">Cloud Template URLs</span>
+          </div>
+          <div class="settings-card-body">
+            <div class="field-group">
+              <label>Prompt Library template</label>
+              <input type="text" id="template-url-prompts" placeholder="https://..." />
+            </div>
+            <div class="field-group">
+              <label>Capture the Flag template</label>
+              <input type="text" id="template-url-challenges" placeholder="https://..." />
+            </div>
+            <div class="settings-compact-actions">
+              <span id="template-urls-test-msg" class="settings-inline-status" style="display:none;"></span>
+              <span id="template-urls-save-msg" class="settings-inline-status" style="display:none;"></span>
+              <button class="btn-secondary btn-icon" onclick="testTemplateUrls()">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
+                Test
+              </button>
+              <button class="btn-secondary btn-icon" onclick="resetTemplateUrls()">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-3.5"/></svg>
+                Reset to default
+              </button>
+              <button class="btn-primary btn-icon" onclick="saveTemplateUrls()">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+                Save
+              </button>
+            </div>
+          </div>
+        </div>
+        </div>
+
+        <div class="adm-card settings-console-card settings-console-card--utility">
+          <div class="adm-card-header">
+            <span class="adm-card-title">Demo Data</span>
+          </div>
+          <div class="settings-card-body">
+            <p class="settings-utility-copy">Generate participants, prompts, conversations and challenge activity for a complete workshop preview.</p>
+            <div class="settings-compact-actions">
+              <span id="demo-data-msg" class="settings-inline-status" style="display:none;color:var(--success);"></span>
+              <button class="btn-secondary btn-icon" onclick="generateDemoData()" id="demo-data-btn">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/><path d="M4.93 4.93a10 10 0 0 0 0 14.14"/></svg>
+                Generate
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="settings-danger-zone">
+        <div class="settings-danger-zone-header">
+          <div>
+            <span class="settings-danger-kicker">Danger zone</span>
+            <h2>Destructive maintenance</h2>
+            <p>Use these actions only when preparing the lab for a new run or cleaning a completed workshop.</p>
+          </div>
+        </div>
+        <div class="settings-danger-grid">
+          <div class="settings-danger-action">
+            <div>
+              <strong>Clear Database</strong>
+              <p>Deletes participants, conversations, challenges, completions and prompt library entries. API keys, providers and settings are kept.</p>
+            </div>
+            <div class="settings-clear-warning">
+              <strong>This will permanently delete:</strong>
+              <ul>
+                <li>All <strong>participant accounts</strong> (admin preserved)</li>
+                <li>All <strong>conversations</strong> and <strong>messages</strong></li>
+                <li>All <strong>challenges</strong>, completions and point penalties</li>
+                <li>All <strong>prompt library</strong> entries</li>
+              </ul>
+              <div>API keys, providers and settings are <strong>kept</strong>.</div>
+            </div>
+            <div class="settings-compact-actions">
+              <span id="clear-db-msg" class="settings-inline-status" style="display:none;"></span>
+              <button class="btn-danger btn-icon" onclick="clearDatabase()">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg>
+                Clear
+              </button>
+            </div>
+          </div>
+          <div class="settings-danger-action settings-danger-action--reset">
+            <div>
+              <strong>Factory Reset</strong>
+              <p>Runs the full workshop reset flow and prepares the environment for the next group.</p>
+            </div>
+            <button class="btn-danger btn-icon" onclick="factoryReset()">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-3.5"/></svg>
+              <span data-i18n="settings_factory_reset">Factory Reset</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── AI Providers ── -->
+    <div class="admin-section" id="section-aiproviders">
+      <div class="adm-card aip-product-card">
+        <div class="aip-product-hero">
+          <div class="aip-product-copy">
+            <span class="aip-product-kicker">AI catalogue</span>
+            <h2>AI Providers</h2>
+            <p>Sync tenant providers, manage visibility and configure model access.</p>
+          </div>
+          <div class="standard-hero-actions aiproviders-hero-actions">
+            <button class="standard-icon-tile" onclick="retrieveAiProviders()" id="retrieve-providers-btn" title="Sync from Netskope" aria-label="Sync from Netskope">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 2v6h-6"/><path d="M3 12a9 9 0 0 1 15-6.7L21 8"/><path d="M3 22v-6h6"/><path d="M21 12a9 9 0 0 1-15 6.7L3 16"/></svg>
+              <span class="visually-hidden" id="sync-ai-label">Sync from Netskope</span>
+            </button>
+            <button class="aip-help-tile" onclick="openHelpSidebar('aiproviders')" title="Open Help" aria-label="Open AI Providers help">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div class="adm-card aip-list-card">
+        <div class="adm-card-header">
+          <span class="adm-card-title">AI Providers in Netskope tenant</span>
+        </div>
+        <div id="aiproviders-state" style="padding:40px;text-align:center;color:var(--text-muted);font-size:13px;">
+          No providers yet. Click "↻ Sync from Netskope" to load.
+        </div>
+        <table class="adm-table resource-admin-table" id="aiproviders-table" style="display:none;table-layout:fixed;width:100%;">
+          <colgroup>
+            <col style="width:5%;" />
+            <col style="width:16%;" />
+            <col style="width:20%;" />
+            <col style="width:10%;" />
+            <col style="width:24%;" />
+            <col style="width:9%;" />
+            <col style="width:8%;" />
+            <col style="width:8%;" />
+          </colgroup>
+          <thead>
+            <tr>
+              <th rowspan="2" style="text-align:center;vertical-align:middle;">ID</th>
+              <th rowspan="2" style="vertical-align:middle;">Name</th>
+              <th rowspan="2" style="vertical-align:middle;">Host</th>
+              <th rowspan="2" style="vertical-align:middle;">Schema</th>
+              <th rowspan="2" style="vertical-align:middle;border-right:2px solid var(--border);">Models</th>
+              <th colspan="3" style="text-align:center;vertical-align:middle;border-bottom:1px solid var(--border);" data-i18n="col_actions">Actions</th>
+            </tr>
+            <tr>
+              <th style="text-align:center;vertical-align:middle;font-weight:500;">Edit</th>
+              <th style="text-align:center;vertical-align:middle;font-weight:500;">API Token</th>
+              <th style="text-align:center;vertical-align:middle;font-weight:500;">
+                <span class="participant-table-header-action">
+                  <span data-i18n="col_visible">Visible</span>
+                  <button class="participant-table-all-btn" onclick="toggleAllAiProvidersVisible()" title="Show all AI providers" aria-label="Show all AI providers" id="aip-toggle-all-btn">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                  </button>
+                </span>
+              </th>
+            </tr>
+          </thead>
+          <tbody id="aiproviders-body"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ── About ── -->
+    <div class="admin-section" id="section-about">
+      <div class="adm-card about-product-card">
+        <div class="about-product-hero">
+          <div class="about-product-copy">
+            <span class="about-product-kicker">Netskope AI Gateway</span>
+            <h2>About</h2>
+            <p>Made with love, coffee, and a suspicious number of “just one last tweak” moments. Built by humans who care about the details, even the tiny ones nobody notices… until they do.</p>
+          </div>
+          <button class="about-help-tile about-version-card about-version-card--action" onclick="window.open('https://github.com/ns-ifranzoni/aigwworkshopctf', '_blank', 'noopener,noreferrer')" title="Open GitHub project" aria-label="Open GitHub project in a new tab">
+            <span class="about-version-label">Current version</span>
+            <span id="about-version-local" class="about-version-value">—</span>
+          </button>
+          <button class="about-help-tile" onclick="openHelpSidebar('about')" title="Open Help" aria-label="Open About help">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
+          </button>
+        </div>
+      </div>
+
+      <div class="adm-card about-details-card">
+        <div class="about-info-grid">
+          <div class="about-info-card">
+            <span class="about-info-label">Platform</span>
+            <strong>Netskope AI Gateway</strong>
+          </div>
+          <div class="about-info-card">
+            <span class="about-info-label">Built by</span>
+            <strong>Netskope Iberia team</strong>
+          </div>
+          <div class="about-info-card">
+            <span class="about-info-label" data-i18n="about_purpose_label">Purpose</span>
+            <strong data-i18n="about_purpose_value">Workshop &amp; Training</strong>
+          </div>
+        </div>
+
+        <div class="about-capabilities">
+          <div class="about-capability">
+            <span class="about-capability-icon">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+            </span>
+            <span>Participant provisioning</span>
+          </div>
+          <div class="about-capability">
+            <span class="about-capability-icon">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3v18"/><path d="M5 8h14"/><path d="M5 16h14"/></svg>
+            </span>
+            <span>Provider visibility controls</span>
+          </div>
+          <div class="about-capability">
+            <span class="about-capability-icon">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect width="7" height="7" x="3" y="3" rx="1"/><rect width="7" height="7" x="14" y="3" rx="1"/><rect width="7" height="7" x="14" y="14" rx="1"/><rect width="7" height="7" x="3" y="14" rx="1"/></svg>
+            </span>
+            <span>MCP server management</span>
+          </div>
+          <div class="about-capability">
+            <span class="about-capability-icon">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3v18h18"/><path d="m19 9-5 5-4-4-3 3"/></svg>
+            </span>
+            <span>Workshop monitoring</span>
+          </div>
+        </div>
+
+        <div class="about-actions-panel">
+          <div class="about-actions-copy">
+            <strong>Maintenance</strong>
+            <span>Open API references, inspect release notes, or check whether a newer build is available.</span>
+          </div>
+          <div class="about-actions">
+            <button class="btn-secondary btn-icon" onclick="window.open('/api-docs','_blank')">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><path d="M10 12h4"/><path d="M10 16h4"/><path d="M10 8h1"/></svg>
+              API Docs
+            </button>
+            <button class="btn-secondary btn-icon" onclick="openChangelog()">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+              Changelog
+            </button>
+            <button class="btn-secondary btn-icon" id="about-check-btn" onclick="checkForUpdates()">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 2v6h-6"/><path d="M3 12a9 9 0 0 1 15-6.7L21 8"/><path d="M3 22v-6h6"/><path d="M21 12a9 9 0 0 1-15 6.7L3 16"/></svg>
+              Check for updates
+            </button>
+            <button class="btn-primary btn-icon" id="about-update-btn" onclick="applyUpdate()" style="display:none;">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M7 10l5 5 5-5"/><path d="M12 15V3"/></svg>
+              Update now
+            </button>
+            <span id="about-update-msg" class="about-update-msg"></span>
+          </div>
+        </div>
+      </div>
+
+      <div class="about-note">
+        <span class="about-note-ic">☕</span>
+        <div class="about-note-copy">
+          <div class="about-note-title" data-i18n="about_note_title">Fuel for the team</div>
+          <p class="about-note-desc" data-i18n="about_note_body">If this lab helped your workshop run smoother, the Netskope Iberia team accepts thanks in coffee, cold beers, Bitcoin, or a good conversation at the next meetup.</p>
+          <div class="about-note-meta" data-i18n="about_note_meta">Reference rate: 1 good conversation = 1 coffee. Premium challenge stories may qualify for beer tier. ₿</div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- ── Help Sidebar ── -->
+    <div class="help-sidebar-overlay" id="help-sidebar-overlay" onclick="closeHelpSidebar()"></div>
+    <div class="help-sidebar" id="help-sidebar">
+      <div class="help-sidebar-header">
+        <span class="help-sidebar-title" id="help-sidebar-title">Help</span>
+        <button class="help-sidebar-close" onclick="closeHelpSidebar()">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      </div>
+      <div class="help-sidebar-body">
+
+        <!-- Content panels -->
+        <div class="help-content">
+
+<div class="help-panel active" id="help-overview">
+            <div class="help-panel-header">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+              <h2>Overview</h2>
+            </div>
+            <p class="help-intro">Welcome to <strong>Workshop &amp; CTF All in One</strong>. This portal runs a hands-on lab where participants interact with LLMs in two modes: routed through Netskope's AI Gateway (<em>Secured</em>), or directly to the provider (<em>Direct</em>).</p>
+            <div class="help-cards">
+              <div class="help-card">
+                <div class="help-card-icon">📊</div>
+                <div class="help-card-title">Dashboard</div>
+                <div class="help-card-desc">Workshop readiness at a glance. 6 status indicators, a live challenge podium (top 3 participants), and a participant activity table.</div>
+              </div>
+              <div class="help-card">
+                <div class="help-card-icon">👥</div>
+                <div class="help-card-title">Participants</div>
+                <div class="help-card-desc">Create and manage participant access codes. Track prompt usage, challenge progress, and Netskope policies per participant.</div>
+              </div>
+              <div class="help-card">
+                <div class="help-card-icon">🎛️</div>
+                <div class="help-card-title">Control Center</div>
+                <div class="help-card-desc">Run the live session: CTF state (Stop / Standby / Run), registration, leaderboard visibility, registration code, plus quick actions — Award Ceremony and fullscreen Leaderboard.</div>
+              </div>
+              <div class="help-card">
+                <div class="help-card-icon">🏆</div>
+                <div class="help-card-title">Challenges</div>
+                <div class="help-card-desc">Create CTF challenges backed by Netskope event queries (or a keyword). Participants complete them by triggering the right AI Gateway events. Import, export, or sync from the cloud template.</div>
+              </div>
+              <div class="help-card">
+                <div class="help-card-icon">🔑</div>
+                <div class="help-card-title">GW Tokens</div>
+                <div class="help-card-desc">Netskope AI Gateway tokens auto-created per participant on registration. Used for per-user attribution in the gateway.</div>
+              </div>
+              <div class="help-card">
+                <div class="help-card-icon">🤖</div>
+                <div class="help-card-title">AI Providers</div>
+                <div class="help-card-desc">Providers synced from the Netskope tenant (OpenAI, Claude, DeepSeek, etc.). Toggle visibility and set API keys for Direct mode.</div>
+              </div>
+              <div class="help-card">
+                <div class="help-card-icon">🔧</div>
+                <div class="help-card-title">MCP Servers</div>
+                <div class="help-card-desc">Model Context Protocol servers available in the workshop. Toggle which ones participants can access from the chat UI.</div>
+              </div>
+              <div class="help-card">
+                <div class="help-card-icon">📄</div>
+                <div class="help-card-title">Prompt Library</div>
+                <div class="help-card-desc">Pre-load prompts for workshop exercises. Participants access them from a slide-in panel in the chat interface.</div>
+              </div>
+              <div class="help-card">
+                <div class="help-card-icon">💬</div>
+                <div class="help-card-title">Conversations</div>
+                <div class="help-card-desc">Monitor all participant conversations in real time. Click any conversation to read the full exchange.</div>
+              </div>
+            </div>
+            <div class="help-note">
+              <strong>First time setup?</strong> Use the <strong>Setup Wizard</strong> (available from the Dashboard) to configure your tenant, retrieve providers and tokens, and get the workshop ready in minutes.
+            </div>
+          </div>
+
+          <div class="help-panel" id="help-gateway">
+            <div class="help-panel-header">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
+              <h2>Netskope AI Gateway</h2>
+            </div>
+            <p class="help-intro">The Netskope AI Gateway is a proxy between the chat portal and LLM providers. It enforces DLP policies, logs all AI traffic, and provides per-user visibility in the Netskope tenant console.</p>
+
+            <div class="help-subsection">
+              <h3>Secured mode</h3>
+              <div class="help-flow">
+                <div class="help-flow-step">Participant<br/><span>Chat Portal</span></div>
+                <div class="help-flow-arrow">→</div>
+                <div class="help-flow-step">This<br/><span>Server</span></div>
+                <div class="help-flow-arrow">→</div>
+                <div class="help-flow-step">Netskope<br/><span>AI Gateway</span></div>
+                <div class="help-flow-arrow">→</div>
+                <div class="help-flow-step">LLM<br/><span>Provider</span></div>
+              </div>
+              <p style="margin-top:8px;">All traffic passes through the Netskope AI Gateway. Policies, DLP, and guardrails are enforced. The participant's GW token attributes the traffic to that user in the tenant console.</p>
+            </div>
+
+            <div class="help-subsection">
+              <h3>Direct mode</h3>
+              <div class="help-flow">
+                <div class="help-flow-step">Participant<br/><span>Chat Portal</span></div>
+                <div class="help-flow-arrow">→</div>
+                <div class="help-flow-step">This<br/><span>Server</span></div>
+                <div class="help-flow-arrow">→</div>
+                <div class="help-flow-step">LLM<br/><span>Provider</span></div>
+              </div>
+              <p style="margin-top:8px;">The gateway is bypassed entirely — no policies apply. Participants toggle between Secured and Direct from the chat header. The contrast is the core of the workshop demo.</p>
+            </div>
+
+            <div class="help-subsection">
+              <h3>GW Token attribution</h3>
+              <p>Each participant's GW token is sent as the Authorization header in Secured mode. This lets Netskope attribute traffic per participant, apply user-level policies, and show individual usage in the tenant console.</p>
+            </div>
+
+            <div class="help-note">The gateway URL must be reachable from the <strong>server's</strong> network — not the participant's browser. All AI requests are proxied server-side.</div>
+          </div>
+
+          <div class="help-panel" id="help-dashboard">
+            <div class="help-panel-header">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+              <h2>Dashboard</h2>
+            </div>
+            <p class="help-intro">The Dashboard is the control center for the workshop. It shows at a glance whether everything is ready, who is leading the challenges, and overall participant activity.</p>
+
+            <div class="help-subsection">
+              <h3>Status</h3>
+              <p>The Status card has two semaphore tiles and five readiness rows. The semaphores open <strong>Control Center</strong>; clicking a light changes state inline without leaving the dashboard. Each readiness row jumps to its section.</p>
+              <ul style="margin:8px 0 0 16px;line-height:2;">
+                <li><strong>Capture the Flag (semaphore)</strong> — current CTF state: Stopped, Standby, or Run.</li>
+                <li><strong>Registration (semaphore)</strong> — open or close participant self-registration.</li>
+                <li><strong>Participants</strong> — green when at least one participant exists.</li>
+                <li><strong>Prompt Library</strong> — green when at least one prompt is visible.</li>
+                <li><strong>Challenges</strong> — green when at least one challenge is visible.</li>
+                <li><strong>MCP Servers</strong> — green when at least one server is enabled.</li>
+                <li><strong>AI Providers</strong> — green when at least one provider is visible.</li>
+              </ul>
+            </div>
+
+            <div class="help-subsection">
+              <h3>Leaderboard</h3>
+              <p>The live ranking of <strong>all</strong> participants by total points (wrong attempts and hint usage each cost −5). <strong>Click any participant</strong> to open their challenge-detail sidebar. The header has two actions: <em>Award ceremony</em> (the fullscreen prize reveal) and <em>Expand</em> (fullscreen ranking with autorefresh).</p>
+            </div>
+
+            <div class="help-subsection">
+              <h3>Participant Activity Table</h3>
+              <p>A quick summary of every participant: prompt usage (progress vs quota, secured vs direct), Capture the Flag progress, and total points. Useful for monitoring during the workshop without leaving the dashboard.</p>
+            </div>
+
+            <div class="help-note"><strong>Setup Wizard</strong> — the <em>Setup wizard</em> button in the page header runs an 8-step wizard to configure the tenant, set the AI Gateway URL, retrieve providers and MCP servers, sync the Prompt Library and CTF templates, and get the workshop ready in minutes.</div>
+          </div>
+
+          <div class="help-panel" id="help-participants">
+            <div class="help-panel-header">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+              <h2>Participants</h2>
+            </div>
+            <p class="help-intro">This section shows all registered workshop participants. Each participant has their own prompt quota, challenge progress, GW token, and conversation history tracked independently.</p>
+
+            <div class="help-subsection">
+              <h3>How participants join</h3>
+              <p>Participants register themselves from the portal login screen. In <strong>Control Center</strong> open registration, set the <strong>Registration Code</strong>, and share it with participants — they click <em>Register here</em> to create their account. Their profile appears in this table immediately after registering.</p>
+            </div>
+
+            <div class="help-subsection">
+              <h3>Participant table columns</h3>
+              <ul style="margin:8px 0 0 16px;line-height:2;">
+                <li><strong>Token Group</strong> — the Netskope AI Gateway token group assigned to this participant.</li>
+                <li><strong>Prompts Used — Progress</strong> — prompts sent vs. the global quota (e.g. <code>3/100</code>).</li>
+                <li><strong>Prompts Used — Secured / Direct</strong> — breakdown by mode: routed through AI Gateway vs. sent directly to the provider.</li>
+                <li><strong>Prompts Used — Reset</strong> — clears the prompt counter for this participant.</li>
+                <li><strong>Capture the Flag — Progress</strong> — number of challenges completed out of total visible.</li>
+                <li><strong>Capture the Flag — Detail</strong> — opens a breakdown of which challenges were completed and any failed attempts.</li>
+                <li><strong>Capture the Flag — Reset</strong> — resets all CTF progress for this participant: completions, penalties, and hints.</li>
+                <li><strong>Policies in Netskope — Add / Delete</strong> — creates or removes the sample policy set for this participant in your Netskope tenant.</li>
+                <li><strong>Delete</strong> — permanently removes the participant, all conversations, and all challenge data. Cannot be undone.</li>
+              </ul>
+            </div>
+
+            <div class="help-subsection">
+              <h3>Bulk actions</h3>
+              <p>Icon buttons in the column headers act on all participants at once:</p>
+              <ul style="margin:8px 0 0 16px;line-height:2;">
+                <li><strong>Reset all prompt counters</strong> — clears prompt counts for every participant.</li>
+                <li><strong>Reset all CTF progress</strong> — clears all challenge completions, penalties, and hints for all participants.</li>
+                <li><strong>Delete all participants</strong> — removes all participants, conversations, and completions.</li>
+                <li><strong>Create all policies in Netskope</strong> — runs policy creation for every participant in one operation.</li>
+                <li><strong>Delete all policies in Netskope</strong> — removes all participant policies from the tenant.</li>
+              </ul>
+            </div>
+
+            <div class="help-subsection">
+              <h3>Netskope sample policies</h3>
+              <p>When you click <em>Add policies</em> for a participant, the portal creates three policy sets in your Netskope tenant, all scoped to that participant's GW token group. Names are derived from the participant's code (e.g. <code>alice</code>):</p>
+              <ul style="margin:8px 0 0 16px;line-height:2;">
+                <li><strong>Access Control</strong> (<code>alice</code>) — restricts which AI providers the participant can reach.</li>
+                <li><strong>Guardrails</strong> (<code>alice Guardrails</code>) — blocks crimes, PII, and jailbreak prompts on prompt and response.</li>
+                <li><strong>DLP</strong> (<code>alice DLP</code>) — enforces GDPR and PCI-DSS profiles on upload, prompt, and response.</li>
+              </ul>
+              <p style="margin-top:8px;">All policies are deployed automatically after creation. Operations are idempotent — running <em>Add</em> again updates existing policies in place.</p>
+            </div>
+
+            <div class="help-note">The global prompt limit is set in <strong>Settings → Prompt Limit</strong>. Admin accounts are not subject to limits.</div>
+            <div class="help-note" style="border-color:#ef4444;background:rgba(239,68,68,0.07);">
+              <strong>⚠ Netskope API actions</strong> — <em>Add policies</em>, <em>Delete policies</em>, <em>Create all</em>, and <em>Delete all</em> make live calls to your Netskope tenant. These operations are <strong>not local-only</strong> and cannot be undone from this portal.
+            </div>
+          </div>
+
+          <div class="help-panel" id="help-control">
+            <div class="help-panel-header">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+              <h2>Control Center</h2>
+            </div>
+            <p class="help-intro">The cockpit for running the live session. From here you govern the game state, registration, what participants can see, and the climax actions — without touching configuration.</p>
+
+            <div class="help-subsection">
+              <h3>Control cards</h3>
+              <ul style="margin:8px 0 0 16px;line-height:2;">
+                <li><strong>Capture the Flag</strong> — semaphore for the global CTF state: <em>Stop</em> (challenges hidden from participants), <em>Standby</em> (visible but submissions paused), <em>Run</em> (active). The card background turns red / amber / green to match. Also mirrored on the Dashboard.</li>
+                <li><strong>Registration</strong> — open or close participant self-registration. When closed, the registration code stops working.</li>
+                <li><strong>Leaderboard</strong> — show or hide the leaderboard <em>for participants</em>. When hidden, their leaderboard button disappears; you (admin) always keep full access on the Dashboard and in the ceremony.</li>
+                <li><strong>Registration Code</strong> — the shared code participants enter to register. Copy it or edit it inline.</li>
+              </ul>
+            </div>
+
+            <div class="help-subsection">
+              <h3>Quick actions</h3>
+              <ul style="margin:8px 0 0 16px;line-height:2;">
+                <li><strong>🏆 Launch Award Ceremony</strong> — a fullscreen, music-synced ranking reveal for the prize-giving moment. The runners-up appear one by one, then the podium is revealed 3rd → 2nd → 1st with confetti. Use the on-screen Start / Stop / Replay controls.</li>
+                <li><strong>Open Leaderboard</strong> — the live ranking in fullscreen, ideal to project during the workshop. Includes an autorefresh toggle.</li>
+                <li><strong>Reset CTF progress</strong> — clears every participant's completions, points and penalties. Asks for confirmation and <strong>cannot be undone</strong>.</li>
+              </ul>
+            </div>
+
+            <div class="help-note">The leaderboard ranks <strong>all</strong> participants — those with no completions appear at the bottom with their penalty-adjusted score.</div>
+          </div>
+
+          <div class="help-panel" id="help-challenges">
+            <div class="help-panel-header">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" y1="22" x2="4" y2="15"/></svg>
+              <h2>Challenges</h2>
+            </div>
+            <p class="help-intro">Challenges are the CTF exercises participants complete by triggering specific events in the Netskope AI Gateway — or by sending a specific keyword. The portal checks completion automatically when a participant clicks <em>Check</em>. The live game state (Stop / Standby / Run) is controlled from <strong>Control Center</strong>.</p>
+
+            <div class="help-subsection">
+              <h3>Challenge types</h3>
+              <ul style="margin:8px 0 0 16px;line-height:2;">
+                <li><strong>Access Control</strong> (also <strong>DLP</strong> and <strong>AI Guardrails</strong>) — query the Netskope event API. Completion requires a real AI Gateway event matching the configured Activity, Gateway Action, and Transaction Type within the lookback window.</li>
+                <li><strong>Text</strong> — checks if the participant has sent a message containing the configured keyword. No Netskope connection needed — useful for offline or local-only workshops.</li>
+              </ul>
+            </div>
+
+            <div class="help-subsection">
+              <h3>Creating a challenge</h3>
+              <div class="help-steps">
+                <div class="help-step"><span class="help-step-num">1</span><div><strong>Title</strong> — short name shown to participants.</div></div>
+                <div class="help-step"><span class="help-step-num">2</span><div><strong>Description</strong> — what the participant needs to do to complete it.</div></div>
+                <div class="help-step"><span class="help-step-num">3</span><div><strong>Type</strong> — Access Control, DLP, AI Guardrails, or Text. Switching the type shows the relevant config fields.</div></div>
+                <div class="help-step"><span class="help-step-num">4</span><div><strong>Config</strong> (event types) — Activity (Prompt/Response, Upload, Download), Gateway Action (Allow, Block, etc.), and Transaction Type (Access, DLP, Guardrails).</div></div>
+                <div class="help-step"><span class="help-step-num">4</span><div><strong>Text key</strong> (Text type) — the exact keyword the participant must send in chat.</div></div>
+                <div class="help-step"><span class="help-step-num">5</span><div><strong>Lookback / Points</strong> — lookback window in minutes (10–60, default 30) and points awarded on completion (10–500, default 50).</div></div>
+                <div class="help-step"><span class="help-step-num">6</span><div><strong>Hint</strong> — optional text participants can reveal. Using a hint costs <strong>−5 points</strong>.</div></div>
+              </div>
+            </div>
+
+            <div class="help-subsection">
+              <h3>Scoring and penalties</h3>
+              <p>Total score = points earned − penalties. Each failed <em>Check</em> attempt deducts <strong>−5 points</strong>. Revealing a hint also deducts <strong>−5 points</strong>. Already-completed challenges are not re-checked.</p>
+            </div>
+
+            <div class="help-subsection">
+              <h3>Import / Export / Sync</h3>
+              <p><em>Export</em> downloads the full challenge list as CSV. <em>Import</em> bulk-loads challenges from a CSV file. <em>Sync template from cloud</em> replaces all current challenges with the pre-built workshop template — existing challenges will be deleted.</p>
+            </div>
+
+            <div class="help-note"><strong>Delete all</strong> removes every challenge and all participant completions. This also runs automatically during a Factory Reset.</div>
+          </div>
+
+          <div class="help-panel" id="help-gwtokens">
+            <div class="help-panel-header">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"/></svg>
+              <h2>GW Tokens</h2>
+            </div>
+            <p class="help-intro">Read-only view of the AI Gateway tokens linked to current participants. Tokens are managed automatically — no manual action is needed here during normal workshop operation.</p>
+
+            <div class="help-subsection">
+              <h3>How it works</h3>
+              <p>When a participant registers, the portal automatically creates a dedicated token group and token in your Netskope tenant using the participant's username as the mnemonic (e.g. <code>Participant-Group-ALICE</code> / <code>Participant-Token-ALICE</code>). The token is stored locally and linked to that participant.</p>
+              <p style="margin-top:6px;">When a participant is deleted, their token and token group are automatically deleted from Netskope and removed from this table.</p>
+            </div>
+
+            <div class="help-subsection">
+              <h3>Token table</h3>
+              <p>Shows all tokens currently linked to a participant. Columns: Token Group, Token Name, Token Value (truncated + copy button), Status, Assigned to, Expires.</p>
+            </div>
+
+            <div class="help-subsection">
+              <h3>Sync from Netskope</h3>
+              <p>Imports tokens from your Netskope tenant into the local DB. Use this to reconnect the portal to an existing tenant after a fresh install or data migration where tokens already exist in Netskope.</p>
+            </div>
+
+            <div class="help-note">Factory Reset deletes all tokens from both the local database and the Netskope tenant. Use it at the end of a workshop run to clean up.</div>
+          </div>
+
+          <div class="help-panel" id="help-aiproviders">
+            <div class="help-panel-header">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/></svg>
+              <h2>AI Providers</h2>
+            </div>
+            <p class="help-intro">AI Providers are the LLM backends available in the participant chat — OpenAI, Anthropic, DeepSeek, Mistral, and others. Synced from your Netskope tenant.</p>
+
+            <div class="help-subsection">
+              <h3>Sync from Netskope</h3>
+              <p>Imports the providers configured in your AI Gateway tenant. <strong>Warning:</strong> syncing overwrites your current provider configuration — existing tokens, model selections, and visibility settings will be reset.</p>
+            </div>
+
+            <div class="help-subsection">
+              <h3>Row actions</h3>
+              <ul style="margin:8px 0 0 16px;line-height:2;">
+                <li><strong>Edit (models)</strong> — opens a modal listing all models available for that provider. Check or uncheck models to control exactly which ones participants can select in the chat dropdown.</li>
+                <li><strong>API Token</strong> — shows <em>Configured</em> or <em>Not set</em>. Click to add or update the provider's API key used in Direct mode. Includes a <em>Test</em> button to verify the key works.</li>
+                <li><strong>Visible</strong> — toggles the provider on/off for participants. Use the eye icon in the column header to show all at once.</li>
+              </ul>
+            </div>
+
+          </div>
+
+          <div class="help-panel" id="help-mcp">
+            <div class="help-panel-header">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg>
+              <h2>MCP Servers</h2>
+            </div>
+            <p class="help-intro">MCP Servers extend the participant chat with tool-calling capabilities — web search, file access, code execution, and more. The list is a <strong>local cache</strong> synced from your Netskope AI Gateway tenant on demand, so the page loads instantly and never stalls if the tenant is unreachable.</p>
+
+            <div class="help-subsection">
+              <h3>Sync from Netskope</h3>
+              <p style="font-size:13px;line-height:1.6;margin:0;">Fetches the current server list from your Netskope tenant and stores it locally. Run it once at setup, and again whenever you add or remove MCP servers in the tenant. Visibility settings for servers that still exist are preserved.</p>
+            </div>
+
+            <div class="help-subsection">
+              <h3>Table columns</h3>
+              <ul style="margin:8px 0 0 16px;line-height:2;">
+                <li><strong>Name</strong> — the MCP server name as configured in Netskope.</li>
+                <li><strong>Host</strong> — the server's host address.</li>
+                <li><strong>Type</strong> — the server type (e.g. <em>streamable-http</em>).</li>
+                <li><strong>Visible</strong> — toggles the server on/off for participants. Only visible servers appear in the participant's MCP dropdown. Use the eye icon in the column header to enable all at once.</li>
+              </ul>
+            </div>
+
+            <div class="help-note">MCP mode always routes through the gateway — the participant's GW token is used for attribution regardless of the Secured/Direct setting.</div>
+          </div>
+
+          <div class="help-panel" id="help-prompts">
+            <div class="help-panel-header">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+              <h2>Prompt Library</h2>
+            </div>
+            <p class="help-intro">The Prompt Library is a shared set of prompts pre-loaded by the admin. Participants access it from the chat interface to quickly send workshop exercises without typing manually.</p>
+
+            <div class="help-subsection">
+              <h3>Header buttons</h3>
+              <ul style="margin:8px 0 0 16px;line-height:2;">
+                <li><strong>Import</strong> — bulk-load prompts from a CSV file. Columns: <code>text, visible</code>.</li>
+                <li><strong>Export</strong> — download all prompts as a CSV file. Columns: <code>seq, text, visible</code>.</li>
+                <li><strong>Sync template from cloud</strong> — replaces all existing prompts with the workshop template. A confirmation is shown before proceeding.</li>
+              </ul>
+            </div>
+
+            <div class="help-subsection">
+              <h3>Adding a prompt</h3>
+              <p>Click the <strong>+</strong> button in the card header to open an inline row. Type the prompt text and click <em>Create</em> to save it.</p>
+            </div>
+
+            <div class="help-subsection">
+              <h3>Table columns</h3>
+              <ul style="margin:8px 0 0 16px;line-height:2;">
+                <li><strong>Drag handle</strong> — drag rows up or down to reorder. Participants see prompts in this sequence.</li>
+                <li><strong>SEQ</strong> — current position in the list.</li>
+                <li><strong>Prompt text</strong> — the message that will be inserted into chat.</li>
+                <li><strong>Edit</strong> — opens the row inline to update the text. Click <em>Save</em> to confirm.</li>
+                <li><strong>Delete</strong> — removes that prompt immediately. Use the trash icon in the column header to delete all prompts at once.</li>
+                <li><strong>Visible</strong> — hidden prompts are preserved in the DB but not shown to participants. Use the eye icon in the column header to toggle all at once.</li>
+              </ul>
+            </div>
+
+            <div class="help-note">Participants open the Prompt Library from the chat header. Clicking a prompt inserts it directly into their chat input. Changes take effect immediately.</div>
+          </div>
+
+          <div class="help-panel" id="help-conversations">
+            <div class="help-panel-header">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+              <h2>Conversations</h2>
+            </div>
+            <p class="help-intro">Monitor all participant conversations in real time. Useful for live facilitation, spotting issues during the workshop, and post-session review.</p>
+
+            <div class="help-subsection">
+              <h3>Two-level navigation</h3>
+              <div class="help-steps" style="margin-top:8px;">
+                <div class="help-step"><span class="help-step-num">1</span><div><strong>Participant list</strong> — shows every participant with at least one conversation, their total conversation count, message count, and last activity time. Click <em>Detail</em> to drill in.</div></div>
+                <div class="help-step"><span class="help-step-num">2</span><div><strong>Conversation list</strong> — shows all conversations for that participant: title, message count, and timestamp. Click <em>Detail</em> to open the full transcript in a modal. Use <em>← Back</em> to return to the participant list.</div></div>
+              </div>
+            </div>
+
+            <div class="help-subsection">
+              <h3>Transcript modal</h3>
+              <p>Opens a modal showing every message in the conversation — role (user / assistant), content, and timestamp.</p>
+            </div>
+
+            <div class="help-subsection">
+              <h3>Delete actions</h3>
+              <ul style="margin:8px 0 0 16px;line-height:2;">
+                <li><strong>Delete all</strong> (column header, participant list) — permanently deletes every conversation from every participant.</li>
+                <li><strong>Delete</strong> (per-participant row) — deletes all conversations for that participant.</li>
+                <li><strong>Delete all</strong> (column header, conversation list) — deletes all conversations for the participant you are viewing.</li>
+                <li><strong>Delete</strong> (per-conversation row) — removes that single conversation and its messages.</li>
+              </ul>
+            </div>
+
+            <div class="help-note">Conversations are stored locally in <code>data.db</code> and are never sent outside the configured AI provider.</div>
+          </div>
+
+          <div class="help-panel" id="help-admins">
+            <div class="help-panel-header">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+              <h2>Admins</h2>
+            </div>
+            <p class="help-intro">Manage admin accounts for the workshop. Admins have full access to this panel, bypass the prompt quota, and are not visible to participants.</p>
+
+            <div class="help-subsection">
+              <h3>Creating an admin</h3>
+              <div class="help-steps" style="margin-top:8px;">
+                <div class="help-step"><span class="help-step-num">1</span><div><strong>Username</strong> — 5–12 characters, auto-uppercased (e.g. <code>ALICE</code>). This is the login code.</div></div>
+                <div class="help-step"><span class="help-step-num">2</span><div><strong>Display name</strong> — optional label shown in the table (e.g. <em>Alice Smith</em>).</div></div>
+                <div class="help-step"><span class="help-step-num">3</span><div>Click <em>Create</em>. A popup shows the username, a randomly-generated password, and the API token. <strong>Save them immediately</strong> — the password is not stored in plain text and cannot be recovered.</div></div>
+              </div>
+            </div>
+
+            <div class="help-subsection">
+              <h3>Row actions</h3>
+              <ul style="margin:8px 0 0 16px;line-height:2;">
+                <li><strong>View token</strong> — shows the admin's API token for copying.</li>
+                <li><strong>Reset password</strong> — generates a new random password and displays it once.</li>
+                <li><strong>Enable / Disable</strong> — disabled accounts cannot log in. The row is dimmed. Not available for <code>ADMIN-2026</code>.</li>
+                <li><strong>Delete</strong> — permanently removes the account. Not available for <code>ADMIN-2026</code>.</li>
+              </ul>
+            </div>
+
+            <div class="help-subsection">
+              <h3>Bulk actions</h3>
+              <ul style="margin:8px 0 0 16px;line-height:2;">
+                <li><strong>Disable all</strong> — disables every admin except <code>ADMIN-2026</code>. Useful at the end of a session.</li>
+                <li><strong>Delete all</strong> — permanently deletes every admin except <code>ADMIN-2026</code>.</li>
+              </ul>
+            </div>
+
+            <div class="help-note"><code>ADMIN-2026</code> is the built-in default account and cannot be deleted or disabled. To replace it, create a new admin and use <em>Disable all</em> to lock out the default.</div>
+          </div>
+
+          <div class="help-panel" id="help-settings">
+            <div class="help-panel-header">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+              <h2>Global Settings</h2>
+            </div>
+            <p class="help-intro">Core configuration for the workshop. Changes take effect immediately.</p>
+
+            <div class="help-subsection">
+              <h3>Netskope Tenant</h3>
+              <p>Your tenant hostname (e.g. <code>yourcompany.goskope.com</code>) and REST API token. Required for syncing GW tokens, AI providers, and MCP servers from your Netskope console, and for creating or deleting participant policies. Use <em>Test</em> to verify before saving.</p>
+            </div>
+
+            <div class="help-note" style="margin-bottom:12px;"><strong>Minimum API token permissions required:</strong>
+              <ul style="margin:6px 0 0 16px;line-height:1.9;">
+                <li>Read/Write — <em>AI Gateway policies</em> + <em>AI Guardrails profiles</em></li>
+                <li>Read — <em>Settings &gt; Security Cloud Platform &gt; AI Gateway</em></li>
+                <li>Read — <em>Skope IT</em> + <em>Incidents</em></li>
+              </ul>
+            </div>
+
+            <div class="help-subsection">
+              <h3>Netskope AI Gateway</h3>
+              <p>The Gateway URL all Secured-mode requests are forwarded to (e.g. <code>http://aigateway.lab:8080</code>). Must be reachable from the <strong>server</strong> — all AI requests are proxied server-side, not from the participant's browser. Use <em>Test</em> to verify reachability before saving.</p>
+            </div>
+
+            <div class="help-subsection">
+              <h3>Cloud Template URLs</h3>
+              <p>The remote URLs the portal fetches when you click <em>Sync template from cloud</em> in the Prompt Library or Challenges sections. Two separate fields: one for the Prompt Library template and one for the CTF challenges template. Use <em>Test</em> to verify both URLs are reachable, or <em>Reset to default</em> to restore the built-in values.</p>
+            </div>
+
+            <div class="help-subsection">
+              <h3>Workshop Limits</h3>
+              <p><strong>Prompts per participant</strong> (default: 100) — when reached, the participant sees a quota message and cannot send more. Admins are exempt. Reset individual counters from Participants, or reset all at once with the bulk reset button there.</p>
+              <p style="margin-top:6px;"><strong>Retries per challenge</strong> (default: 5) — max failed attempts before a 5-minute cooldown. After the cooldown the counter resets, but each new failure still deducts 5 points. Set to <code>0</code> for unlimited retries with no cooldown.</p>
+            </div>
+
+            <div class="help-subsection">
+              <h3>Demo Data</h3>
+              <p>Creates 10 demo participants (DEMO-01 to DEMO-10) with pre-set challenge completions, 10 demo challenges, and 8 demo prompts — so you can preview the ranking and podium without a live workshop. Additive: existing participants and challenges are not overwritten.</p>
+            </div>
+
+            <div class="help-subsection">
+              <h3>Clear Database</h3>
+              <p>Removes all workshop data from the local database without touching the Netskope tenant. Use this when the Netskope side is already clean or not applicable.</p>
+              <p style="margin-top:6px;"><strong>Deleted:</strong> participants, conversations, challenges, completions, prompt library.</p>
+              <p style="margin-top:4px;"><strong>Preserved:</strong> admin accounts, settings, GW tokens (unassigned but kept), AI providers, MCP servers.</p>
+            </div>
+
+            <div class="help-subsection">
+              <h3>Factory Reset</h3>
+              <p>Full wipe of all workshop data — also cleans up the Netskope tenant. <strong>Only admin accounts are preserved.</strong></p>
+              <ul style="margin:8px 0 0 16px;line-height:2;">
+                <li>Deletes all participants, conversations, and messages.</li>
+                <li>Deletes all challenges and completions.</li>
+                <li>Deletes all GW tokens from the local DB <strong>and</strong> from the Netskope tenant.</li>
+                <li>Deletes AI providers, MCP servers, and the prompt library.</li>
+                <li>Resets all settings to defaults (gateway URL, tenant, API token, prompt limit, CTF state).</li>
+              </ul>
+            </div>
+
+            <div class="help-note">Factory Reset is irreversible. Use it at the end of a workshop run to prepare for the next group.</div>
+          </div>
+
+        </div><!-- /help-content -->
+      </div><!-- /help-sidebar-body -->
+    </div><!-- /help-sidebar -->
+
+  </main>
+</div>
+
+
+
+<!-- ══════════════════════════════════════
+     SETUP WIZARD
+══════════════════════════════════════ -->
+<div id="setup-wizard-overlay" style="display:none;">
+  <div class="wizard-modal" data-1p-ignore data-lpignore="true">
+    <aside class="wizard-rail">
+      <img class="wizard-brand" src="/img/netskope-logo-dark.png" alt="Netskope" onerror="this.style.display='none'" />
+      <div class="wizard-rail-kicker" data-i18n="wizard_kicker">Initial setup</div>
+      <h1 data-i18n="wizard_title">Workshop launch checklist</h1>
+      <!-- Step indicators -->
+      <div class="wizard-steps" id="wizard-steps"></div>
+    </aside>
+
+    <section class="wizard-main">
+      <div class="wizard-topline">
+        <span id="wizard-progress-label">Step 1 of 7</span>
+        <strong id="wizard-progress-title">Readiness</strong>
+      </div>
+
+      <!-- Progress bar -->
+      <div class="wizard-progress">
+        <div class="wizard-progress-bar" id="wizard-progress-bar"></div>
+      </div>
+
+      <!-- Steps container -->
+      <div class="wizard-body">
+
+      <!-- Step 1: Updates -->
+      <div class="wizard-step active" id="wstep-1">
+        <div class="wizard-welcome">
+          <span class="wizard-welcome-badge">Netskope AI Gateway</span>
+          <div class="wizard-welcome-mark">
+            <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="m9 12 2 2 4-5"/></svg>
+          </div>
+          <h2>Workshop &amp; CTF setup assistant</h2>
+          <p>We'll guide you through the essential configuration so your AI Gateway lab is ready for participants.</p>
+          <div class="wizard-welcome-meta">
+            <span><strong>9</strong> guided steps</span>
+            <span><strong>3 min</strong> estimated time</span>
+            <span><strong>Saved</strong> as you progress</span>
+          </div>
+        </div>
+        <div class="wizard-action-card wizard-action-card--readiness">
+          <div><strong>Optional readiness check</strong><span>Confirm you're using the latest workshop build before continuing.</span></div>
+          <div class="wizard-step-actions">
+          <button class="btn-secondary btn-icon" id="wiz-check-update-btn" onclick="wizCheckUpdate()">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 2v6h-6"/><path d="M3 12a9 9 0 0 1 15-6.7L21 8"/><path d="M3 22v-6h6"/><path d="M21 12a9 9 0 0 1-15 6.7L3 16"/></svg>
+            Check for updates
+          </button>
+          <button class="btn-primary btn-icon" id="wiz-apply-update-btn" onclick="wizApplyUpdate()" style="display:none;">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M7 10l5 5 5-5"/><path d="M12 15V3"/></svg>
+            Update now
+          </button>
+          <div id="wiz-update-msg" class="wizard-msg"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 2: Keep in mind -->
+      <div class="wizard-step" id="wstep-2">
+        <div class="wizard-step-heading"><span class="wizard-step-icon">02</span><div><span class="wizard-eyebrow">Before you continue</span><h2>Keep in mind</h2></div></div>
+        <p>AI Gateway configuration changes may take up to 30 minutes to fully sync and become active.</p>
+        <div class="wizard-notice-card">
+          <div class="wizard-notice-icon">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>
+          </div>
+          <div>
+            <strong>Allow time for changes to propagate</strong>
+            <p>You can confirm the latest status in your Netskope tenant by opening the AI Gateway details under Settings.</p>
+          </div>
+        </div>
+        <div class="wizard-impact-note">
+          <strong>Why this matters</strong>
+          <span>Changes made shortly before or during the session may temporarily affect the participant experience across the Workshop and CTF.</span>
+        </div>
+      </div>
+
+      <!-- Step 3: Netskope Tenant -->
+      <div class="wizard-step" id="wstep-3">
+        <div class="wizard-step-heading"><span class="wizard-step-icon">03</span><div><span class="wizard-eyebrow">Secure connection</span><h2 data-i18n="wizard_step2_title">Netskope Tenant</h2></div></div>
+        <p data-i18n="wizard_step2_desc">Connect to your Netskope tenant to sync AI Gateway tokens and providers.</p>
+        <div class="wizard-form-card">
+          <div class="wizard-field">
+            <label data-i18n="settings_tenant_hostname">Tenant hostname</label>
+          <input type="text" id="wiz-tenant" placeholder="yourcompany.goskope.com" autocomplete="off" data-1p-ignore data-lpignore="true" />
+          </div>
+          <div class="wizard-field">
+            <label data-i18n="settings_api_token_label">API Token</label>
+            <input type="password" id="wiz-api-token" placeholder="Paste your Netskope API token" data-i18n-placeholder="wizard_api_token_placeholder" autocomplete="off" data-1p-ignore data-lpignore="true" />
+          </div>
+        </div>
+        <div class="wizard-inline-action">
+          <button class="btn-secondary btn-icon" onclick="wizTestConnection()">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
+            <span data-i18n="settings_test_connection">Test connection</span>
+          </button>
+          <span id="wiz-tenant-msg" class="wizard-msg" style="font-size:12px;"></span>
+        </div>
+      </div>
+
+      <!-- Step 4: NTSK AI Gateway URL -->
+      <div class="wizard-step" id="wstep-4">
+        <div class="wizard-step-heading"><span class="wizard-step-icon">04</span><div><span class="wizard-eyebrow">Traffic route</span><h2 data-i18n="wizard_step3_title">NTSK AI Gateway URL</h2></div></div>
+        <p data-i18n="wizard_step3_desc">Set the endpoint participants' chat requests will be routed through when using Secured mode.</p>
+        <div class="wizard-field wizard-form-card">
+          <label data-i18n="settings_gw_url_label">Gateway URL</label>
+          <input type="text" id="wiz-gateway-url" placeholder="http://aigateway.lab:8080" />
+          <span class="wizard-field-hint" data-i18n="wizard_gateway_hint">Must be reachable from this server, not the participant's browser.</span>
+        </div>
+        <div id="wiz-gateway-msg" class="wizard-msg"></div>
+      </div>
+
+      <!-- Step 5: AI Providers -->
+      <div class="wizard-step" id="wstep-5">
+        <div class="wizard-step-heading"><span class="wizard-step-icon">05</span><div><span class="wizard-eyebrow">AI catalogue</span><h2 data-i18n="wizard_step4_title">AI Providers</h2></div></div>
+        <p data-i18n="wizard_step4_desc">Retrieve the list of AI providers configured in your Netskope tenant. You can set visibility and API tokens per provider after this wizard.</p>
+        <button class="btn-primary" onclick="wizRetrieveProviders()" id="wiz-retrieve-btn">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
+          <span data-i18n="wizard_retrieve_providers">Retrieve from Netskope Tenant</span>
+        </button>
+        <div id="wiz-providers-result" style="margin-top:14px;font-size:13px;color:var(--text-muted);"></div>
+      </div>
+
+      <!-- Step 6: MCP Servers -->
+      <div class="wizard-step" id="wstep-6">
+        <div class="wizard-step-heading"><span class="wizard-step-icon">06</span><div><span class="wizard-eyebrow">Connected tools</span><h2 data-i18n="wizard_step5_title">MCP Servers</h2></div></div>
+        <p data-i18n="wizard_step5_desc">Discover MCP servers available in your Netskope tenant. You can decide which ones participants can use from the MCP Servers section after setup.</p>
+        <button class="btn-primary" onclick="wizRetrieveMcpServers()" id="wiz-mcp-btn">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="6" rx="2"/><rect x="3" y="14" width="18" height="6" rx="2"/><path d="M7 8h.01M7 18h.01"/></svg>
+          <span data-i18n="wizard_discover_mcp">Discover MCP Servers</span>
+        </button>
+        <div id="wiz-mcp-result" style="margin-top:14px;font-size:13px;color:var(--text-muted);"></div>
+      </div>
+
+      <!-- Step 7: Prompt Library -->
+      <div class="wizard-step" id="wstep-7">
+        <div class="wizard-step-heading"><span class="wizard-step-icon">07</span><div><span class="wizard-eyebrow">Participant content</span><h2 data-i18n="wizard_step6_title">Prompt Library</h2></div></div>
+        <p data-i18n="wizard_step6_desc">Import the recommended starter prompts for participants from the workshop template.</p>
+        <div class="wizard-step-actions">
+          <button class="btn-primary" onclick="wizSyncPromptTemplate()" id="wiz-sync-prompts-btn">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 2v6h-6"/><path d="M3 12a9 9 0 0 1 15-6.7L21 8"/><path d="M3 22v-6h6"/><path d="M21 12a9 9 0 0 1-15 6.7L3 16"/></svg>
+            <span data-i18n="wizard_sync_prompts">Sync Prompt Library template</span>
+          </button>
+        </div>
+        <div id="wiz-prompts-msg" class="wizard-msg"></div>
+      </div>
+
+      <!-- Step 8: Capture the Flag -->
+      <div class="wizard-step" id="wstep-8">
+        <div class="wizard-step-heading"><span class="wizard-step-icon">08</span><div><span class="wizard-eyebrow">Workshop challenges</span><h2 data-i18n="wizard_step7_title">Capture the Flag</h2></div></div>
+        <p data-i18n="wizard_step7_desc">Import the Capture the Flag challenges from the template so participants can start completing them.</p>
+        <div class="wizard-step-actions">
+          <button class="btn-primary" onclick="wizSyncChallengesTemplate()" id="wiz-sync-challenges-btn">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 2v6h-6"/><path d="M3 12a9 9 0 0 1 15-6.7L21 8"/><path d="M3 22v-6h6"/><path d="M21 12a9 9 0 0 1-15 6.7L3 16"/></svg>
+            <span data-i18n="wizard_sync_challenges">Sync Capture the Flag template</span>
+          </button>
+        </div>
+        <div id="wiz-challenges-msg" class="wizard-msg"></div>
+      </div>
+
+      <!-- Step 9: Done -->
+      <div class="wizard-step" id="wstep-9">
+        <div class="wizard-step-heading wizard-step-heading--complete"><span class="wizard-step-icon">✓</span><div><span class="wizard-eyebrow">Ready to launch</span><h2 data-i18n="wizard_step8_title">You're all set!</h2></div></div>
+        <p data-i18n="wizard_step8_desc">Your workshop environment is configured. Here's a summary of what's ready:</p>
+        <div id="wizard-summary" class="wizard-summary"></div>
+        <p style="font-size:13px;color:var(--text-muted);margin-top:12px;" data-i18n="wizard_step8_hint">You can always adjust these settings from Global Settings in the sidebar.</p>
+      </div>
+
+      </div>
+
+      <!-- Navigation -->
+      <div class="wizard-footer">
+        <button class="btn-secondary wizard-nav-btn wizard-nav-back" id="wizard-back-btn" onclick="wizNav(-1)" style="display:none;">← <span data-i18n="wizard_back">Back</span></button>
+        <div style="display:flex;align-items:center;gap:8px;margin-left:auto;">
+          <button class="wizard-nav-btn wizard-nav-skip" onclick="wizSkip()" id="wizard-skip-btn" data-i18n="wizard_skip">Skip setup</button>
+          <button class="btn-primary wizard-nav-btn wizard-nav-next" id="wizard-next-btn" onclick="wizNav(1)"><span data-i18n="wizard_next">Next</span> →</button>
+        </div>
+      </div>
+    </section>
+
+  </div>
+</div>
+
+<script src="/js/i18n.js?v=7"></script>
+<script src="/js/app.js?v=7"></script>
+
+<!-- API Token Modal -->
+<div id="aip-token-modal" style="display:none;position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,0.7);backdrop-filter:blur(4px);align-items:center;justify-content:center;">
+  <div style="background:var(--bg-secondary);border:1px solid var(--border);border-radius:16px;padding:28px;width:100%;max-width:440px;box-shadow:0 24px 64px rgba(0,0,0,0.5);">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;">
+      <div>
+        <div style="font-size:15px;font-weight:700;color:var(--text-primary);">API Token</div>
+        <div id="aip-modal-provider-name" style="font-size:12px;color:var(--text-muted);margin-top:2px;"></div>
+      </div>
+      <button onclick="closeAipTokenModal()" style="color:var(--text-muted);font-size:20px;line-height:1;padding:4px 8px;">✕</button>
+    </div>
+    <div style="margin-bottom:20px;">
+      <label style="display:block;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.5px;color:var(--text-secondary);margin-bottom:8px;">Token value</label>
+      <input type="password" id="aip-modal-token-input"
+        placeholder="Paste your API token here…"
+        autocomplete="off" data-1p-ignore data-lpignore="true" data-form-type="other"
+        style="width:100%;background:var(--input-bg);border:1px solid var(--border);border-radius:var(--radius-sm);padding:10px 14px;color:var(--text-primary);font-size:13px;font-family:monospace;"
+        onkeydown="if(event.key==='Enter')saveAipModalToken();if(event.key==='Escape')closeAipTokenModal();" />
+      <p id="aip-modal-hint" style="font-size:11px;color:var(--text-muted);margin-top:6px;"></p>
+    </div>
+    <div id="aip-test-result" style="display:none;margin-bottom:16px;padding:10px 14px;border-radius:var(--radius-sm);font-size:12px;font-family:monospace;white-space:pre-wrap;word-break:break-all;max-height:120px;overflow-y:auto;"></div>
+    <div class="admin-form-actions admin-modal-actions">
+      <button class="btn-secondary" onclick="closeAipTokenModal()">Cancel</button>
+      <button id="aip-test-btn" class="btn-secondary" onclick="testAipToken()" title="Test the token against this provider">Test</button>
+      <button class="btn-primary btn-icon admin-primary-action" onclick="saveAipModalToken()">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+        Save token
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Alert Modal -->
+<div id="alert-modal" style="display:none;position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,0.7);backdrop-filter:blur(4px);align-items:center;justify-content:center;">
+  <div style="background:var(--bg-secondary);border:1px solid var(--border);border-radius:16px;padding:28px;width:100%;max-width:420px;box-shadow:0 24px 64px rgba(0,0,0,0.5);">
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;">
+      <div id="alert-modal-icon" style="width:38px;height:38px;border-radius:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0;"></div>
+      <div>
+        <div id="alert-modal-title" style="font-size:15px;font-weight:700;color:var(--text-primary);"></div>
+      </div>
+    </div>
+    <p id="alert-modal-body" style="font-size:13px;color:var(--text-secondary);margin-bottom:24px;line-height:1.6;"></p>
+    <div style="display:flex;justify-content:flex-end;">
+      <button class="btn-secondary" onclick="closeAlertModal()" style="padding:9px 20px;">OK</button>
+    </div>
+  </div>
+</div>
+
+<!-- Changelog Modal -->
+<div id="changelog-modal" style="display:none;position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,0.7);backdrop-filter:blur(4px);align-items:center;justify-content:center;">
+  <div style="background:var(--bg-secondary);border:1px solid var(--border);border-radius:16px;padding:28px;width:100%;max-width:560px;max-height:80vh;display:flex;flex-direction:column;box-shadow:0 24px 64px rgba(0,0,0,0.5);">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;">
+      <div style="font-size:15px;font-weight:700;color:var(--text-primary);">Changelog</div>
+      <button onclick="document.getElementById('changelog-modal').style.display='none'" style="background:none;border:none;cursor:pointer;color:var(--text-secondary);padding:4px;">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+    <div id="changelog-body" style="overflow-y:auto;font-size:13px;color:var(--text-secondary);line-height:1.7;flex:1;"></div>
+  </div>
+</div>
+
+<!-- Generic Confirm Modal -->
+<div id="confirm-modal" style="display:none;position:fixed;inset:0;z-index:9998;background:rgba(0,0,0,0.7);backdrop-filter:blur(4px);align-items:center;justify-content:center;">
+  <div style="background:var(--bg-secondary);border:1px solid var(--border);border-radius:16px;padding:28px;width:100%;max-width:420px;box-shadow:0 24px 64px rgba(0,0,0,0.5);">
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;">
+      <div style="width:38px;height:38px;border-radius:10px;background:rgba(220,38,38,0.15);display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#dc2626" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/></svg>
+      </div>
+      <div>
+        <div id="confirm-modal-title" style="font-size:15px;font-weight:700;color:var(--text-primary);"></div>
+        <div id="confirm-modal-subtitle" style="font-size:12px;color:var(--text-muted);margin-top:1px;"></div>
+      </div>
+    </div>
+    <p id="confirm-modal-body" style="font-size:13px;color:var(--text-secondary);margin-bottom:24px;line-height:1.6;"></p>
+    <div style="display:flex;gap:10px;justify-content:flex-end;">
+      <button class="btn-secondary" onclick="closeConfirmModal()" style="padding:9px 20px;" data-i18n="modal_cancel">Cancel</button>
+      <button id="confirm-modal-ok" class="btn-danger" style="padding:9px 20px;" data-i18n="modal_delete">Delete</button>
+    </div>
+  </div>
+</div>
+
+<!-- Factory Reset Progress Modal -->
+<div id="factory-reset-progress-modal" class="factory-reset-progress-modal" style="display:none;">
+  <div class="factory-reset-progress-card">
+    <div class="factory-reset-progress-header">
+      <div id="factory-reset-progress-icon" class="factory-reset-progress-icon is-running">
+        <span class="factory-reset-spinner"></span>
+      </div>
+      <div>
+        <div id="factory-reset-progress-title" class="factory-reset-progress-title">Factory reset in progress</div>
+        <div id="factory-reset-progress-subtitle" class="factory-reset-progress-subtitle">Deleting workshop data and validating Netskope tokens...</div>
+      </div>
+    </div>
+    <div id="factory-reset-progress-steps" class="factory-reset-progress-steps">
+      <div class="factory-reset-step is-running">
+        <span class="factory-reset-step-dot"></span>
+        <div>
+          <div class="factory-reset-step-title">Starting factory reset</div>
+          <div class="factory-reset-step-detail">Please keep this window open.</div>
+        </div>
+      </div>
+    </div>
+    <div id="factory-reset-progress-errors" class="factory-reset-progress-errors" style="display:none;"></div>
+    <div class="factory-reset-progress-actions">
+      <button id="factory-reset-progress-ok" class="btn-primary" onclick="closeFactoryResetProgressModal()" disabled>OK</button>
+    </div>
+  </div>
+</div>
+
+<!-- Factory Reset Modal -->
+<div id="factory-reset-modal" style="display:none;position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,0.7);backdrop-filter:blur(4px);align-items:center;justify-content:center;">
+  <div style="background:var(--bg-secondary);border:1px solid var(--border);border-radius:16px;padding:32px;width:100%;max-width:460px;box-shadow:0 24px 64px rgba(0,0,0,0.5);">
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:20px;">
+      <div style="width:40px;height:40px;border-radius:10px;background:rgba(220,38,38,0.15);display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#dc2626" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+      </div>
+      <div>
+        <div style="font-size:16px;font-weight:700;color:var(--text-primary);" data-i18n="modal_factory_reset_title">Factory Reset</div>
+        <div style="font-size:12px;color:var(--text-muted);" data-i18n="modal_factory_reset_subtitle">This action cannot be undone</div>
+      </div>
+    </div>
+
+    <p style="font-size:13px;color:var(--text-secondary);margin-bottom:16px;" data-i18n="modal_factory_reset_desc">The following will be permanently deleted:</p>
+    <ul style="font-size:13px;color:var(--text-secondary);padding-left:20px;margin-bottom:20px;display:flex;flex-direction:column;gap:5px;">
+      <li data-i18n="modal_factory_reset_item1">All participant access codes</li>
+      <li data-i18n="modal_factory_reset_item2">All GW tokens created for this workshop in your Netskope tenant</li>
+      <li data-i18n="modal_factory_reset_item3">All conversations &amp; messages</li>
+      <li data-i18n="modal_factory_reset_item4">All prompt library entries</li>
+      <li data-i18n="modal_factory_reset_item5">All settings (gateway URL, API tokens, models…)</li>
+      <li data-i18n="modal_factory_reset_item6">All local admin (default admin)</li>
+    </ul>
+    <p style="font-size:12px;color:var(--text-muted);margin-bottom:20px;" data-i18n="modal_factory_reset_admin_note">The admin account is not affected.</p>
+
+    <label style="display:block;font-size:11px;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px;" data-i18n="modal_factory_reset_type_label">Type <code style="color:var(--danger);background:rgba(220,38,38,0.1);padding:1px 5px;border-radius:4px;">RESET</code> to confirm</label>
+    <input id="factory-reset-input" type="text" placeholder="RESET" autocomplete="off"
+      style="width:100%;background:var(--input-bg);border:1px solid var(--border);border-radius:var(--radius-sm);padding:9px 12px;color:var(--text-primary);font-size:14px;font-weight:600;letter-spacing:2px;margin-bottom:20px;"
+      oninput="const _b=document.getElementById('factory-reset-confirm-btn');const _ok=this.value.trim().toUpperCase()==='RESET';_b.disabled=!_ok;_b.style.opacity=_ok?'1':'.4'"
+      onkeydown="if(event.key==='Enter')confirmFactoryReset();if(event.key==='Escape')closeFactoryResetModal();" />
+
+    <div style="display:flex;gap:10px;justify-content:flex-end;">
+      <button class="btn-secondary" onclick="closeFactoryResetModal()" style="padding:9px 20px;" data-i18n="modal_cancel">Cancel</button>
+      <button id="factory-reset-confirm-btn" class="btn-danger" onclick="confirmFactoryReset()" disabled style="padding:9px 20px;opacity:.4;transition:opacity .15s;" data-i18n="modal_factory_reset_confirm_btn">Reset everything</button>
+    </div>
+  </div>
+</div>
+
+<!-- Participant CTF sidebar -->
+<div id="ctf-sidebar-overlay" class="ctf-sidebar-overlay" onclick="closeCtfSidebar()"></div>
+<div id="ctf-sidebar" class="ctf-sidebar">
+  <div class="ctf-sidebar-header">
+    <div>
+      <div class="ctf-sidebar-name" id="ctf-sidebar-name">—</div>
+      <div class="ctf-sidebar-sub" id="ctf-sidebar-sub">Challenge progress</div>
+    </div>
+    <button class="ctf-sidebar-close" onclick="closeCtfSidebar()">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+    </button>
+  </div>
+  <div class="ctf-sidebar-score" id="ctf-sidebar-score"></div>
+  <div class="ctf-sidebar-section-title">Activity timeline</div>
+  <div class="ctf-sidebar-timeline" id="ctf-sidebar-timeline"></div>
+</div>
+</body>
+</html>
