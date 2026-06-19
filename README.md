@@ -12,8 +12,8 @@ leaderboard, prompt library and an admin panel.
 ## Install
 
 ```bash
-git clone https://github.com/ns-ifranzoni/aigwworkshopctf.git
-cd aigwworkshopctf
+git clone https://github.com/ns-ifranzoni/aigw-workshop-ctf.git
+cd aigw-workshop-ctf
 docker compose up -d --build
 ```
 
