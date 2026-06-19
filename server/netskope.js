@@ -12,6 +12,10 @@ function netskopeHeaders(apiToken) {
   return { 'Content-Type': 'application/json', 'Netskope-Api-Token': apiToken };
 }
 
+function netskopeBearerHeaders(apiToken) {
+  return { accept: 'application/json', Authorization: `Bearer ${apiToken}` };
+}
+
 const sleep = ms => new Promise(r => setTimeout(r, ms));
 
 // Fetch with automatic retry on 429, respecting RateLimit-Reset header
@@ -39,6 +43,10 @@ async function listTokenGroups(tenant, apiToken) {
 
 async function listTokens(tenant, apiToken) {
   return nsFetch(`https://${tenant}/api/v2/aig/tokens`, { headers: netskopeHeaders(apiToken) });
+}
+
+async function listAppliances(tenant, apiToken) {
+  return nsFetch(`https://${tenant}/api/v2/aig/appliances`, { headers: netskopeBearerHeaders(apiToken) });
 }
 
 async function createTokenGroup(tenant, apiToken, name, description = '') {
@@ -138,4 +146,4 @@ async function deleteTokenGroup(tenant, apiToken, groupId) {
   return true;
 }
 
-module.exports = { getNetskopeConfig, listTokenGroups, listTokens, createTokenGroup, createToken, createBulkParticipantTokens, bulkNames, checkDuplicateNames, deleteToken, deleteTokenGroup };
+module.exports = { getNetskopeConfig, listTokenGroups, listTokens, listAppliances, createTokenGroup, createToken, createBulkParticipantTokens, bulkNames, checkDuplicateNames, deleteToken, deleteTokenGroup };

@@ -11,7 +11,7 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 
 // Structured request logging (skip /api/health to avoid noise)
-app.use(pinoHttp({ logger, autoLogging: { ignore: (req) => req.url === '/api/health' } }));
+app.use(pinoHttp({ logger, autoLogging: false }));
 
 // CORS: allow only the explicitly configured origin (defaults to same-origin / disabled).
 // Set ALLOWED_ORIGIN=https://your-domain.com when the API is accessed from a different host.
@@ -54,6 +54,10 @@ app.get('/api/settings/aiproviders', (req, res) => {
 // Serve v2 interface
 app.get('/v2', (req, res) => {
   res.sendFile(path.join(__dirname, '../public/v2/index.html'));
+});
+
+app.use('/api', (req, res) => {
+  res.status(404).json({ error: `API route not found: ${req.originalUrl}` });
 });
 
 // Fallback to index.html for SPA

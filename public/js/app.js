@@ -301,7 +301,7 @@ function enterApp(freshLogin = false) {
     let tab = 'dashboard';
     if (!freshLogin) {
       const savedTab = localStorage.getItem('adminTab');
-      const validTabs = ['dashboard','control','codes','apikeys','prompts','challenges','conversations','mcp','aiproviders','settings','admins','about'];
+      const validTabs = ['dashboard','control','codes','apikeys','aigateway','prompts','challenges','conversations','mcp','aiproviders','settings','admins','about'];
       if (savedTab && validTabs.includes(savedTab)) tab = savedTab;
     }
     adminTab(tab);
@@ -1387,7 +1387,8 @@ function adminTab(tab) {
   document.getElementById(`section-${tab}`).classList.add('active');
   localStorage.setItem('adminTab', tab);
   if (tab === 'dashboard') { loadDashboard(); }
-  if (tab === 'settings') { loadAdminGatewayUrl(); loadNetskopeSettings(); loadModelSettings(); loadProviderTokens(); loadTemplateUrls(); }
+  if (tab === 'aigateway') { loadNetskopeSettings(); loadAdminGatewayUrl(); loadAiGatewayMonitor(); }
+  if (tab === 'settings') { loadModelSettings(); loadProviderTokens(); loadTemplateUrls(); }
   if (tab === 'mcp') loadMcpServers();
   if (tab === 'apikeys') loadApiKeys();
   if (tab === 'prompts') { loadPromptLibrary(); }
@@ -4044,21 +4045,24 @@ async function loadNetskopeSettings() {
     const d = await res.json();
     const tenantEl = document.getElementById('ns-tenant');
     if (tenantEl) tenantEl.value = d.tenant || '';
-    // api_token shown masked, leave input empty for security
+    const tokenEl = document.getElementById('ns-api-token');
+    if (tokenEl) tokenEl.value = d.api_token || '';
   } catch {}
 }
 
 async function saveNetskopeSettings() {
   const tenant = document.getElementById('ns-tenant').value.trim();
   const apiToken = document.getElementById('ns-api-token').value.trim();
-  if (!tenant || !apiToken) return showNsMsg('Both tenant and API token are required', false);
+  const tokenIsPlaceholder = apiToken.startsWith('••••');
+  if (!tenant || (!apiToken && !tokenIsPlaceholder)) return showNsMsg('Both tenant and API token are required', false);
+  if (!tenant) return showNsMsg('Tenant is required', false);
 
   const res = await apiFetch('/api/admin/settings/netskope', {
     method: 'PUT',
     body: JSON.stringify({ tenant, api_token: apiToken })
   });
   if (res.ok) {
-    document.getElementById('ns-api-token').value = '';
+    await loadNetskopeSettings();
     showNsMsg('✓ Saved!', true);
   } else {
     const d = await res.json();
@@ -4109,6 +4113,261 @@ function showNsMsg(text, success) {
   el.style.color = success === true ? 'var(--success)' : success === false ? 'var(--danger)' : 'var(--text-muted)';
   el.style.display = 'inline';
   if (success !== null) setTimeout(() => el.style.display = 'none', 4000);
+}
+
+async function loadAiGatewayMonitor() {
+  const body = document.getElementById('aigw-monitor-body');
+  const btn = document.getElementById('aigw-monitor-refresh');
+  if (!body) return;
+  stopAiGatewaySyncCountdowns();
+  body.innerHTML = '<div class="aigateway-monitor-empty">Loading AI Gateway status...</div>';
+  if (btn) btn.disabled = true;
+  try {
+    const res = await apiFetch('/api/admin/netskope/appliances');
+    const text = await res.text();
+    let data;
+    try {
+      data = text ? JSON.parse(text) : {};
+    } catch {
+      const looksLikeHtml = text.trim().startsWith('<!DOCTYPE') || text.trim().startsWith('<html');
+      throw new Error(looksLikeHtml
+        ? 'AI Gateway status endpoint returned HTML. Restart the portal server so the new /api/admin/netskope/appliances route is loaded.'
+        : 'AI Gateway status endpoint returned invalid JSON.');
+    }
+    if (!res.ok) throw new Error(data.error || `HTTP ${res.status}`);
+    renderAiGatewayMonitor(data);
+  } catch (e) {
+    body.innerHTML = `<div class="aigateway-monitor-empty aigateway-monitor-empty--error">${escapeHtml(e.message)}</div>`;
+  } finally {
+    if (btn) btn.disabled = false;
+  }
+}
+
+function renderAiGatewayMonitor(data) {
+  const body = document.getElementById('aigw-monitor-body');
+  if (!body) return;
+  const appliances = Array.isArray(data.elements) ? data.elements : [];
+  if (!appliances.length) {
+    stopAiGatewaySyncCountdowns();
+    const host = data.configured_gateway_host ? ` for host ${escapeHtml(data.configured_gateway_host)}` : '';
+    body.innerHTML = `<div class="aigateway-monitor-empty">No AI Gateway appliance found${host}.</div>`;
+    return;
+  }
+
+  body.innerHTML = `
+    <div class="aigateway-monitor-grid">
+      ${appliances.map(renderAiGatewayAppliance).join('')}
+    </div>
+    <div class="aigateway-monitor-footer">
+      Tenant: ${escapeHtml(data.tenant || '-')} - Last refresh: ${escapeHtml(formatAiGatewayDate(data.fetched_at))}
+    </div>
+  `;
+  startAiGatewaySyncCountdowns();
+}
+
+function renderAiGatewayAppliance(a) {
+  const status = String(a.status || 'unknown').toLowerCase();
+  const cpu = clampPercent(a.cpu_used);
+  const memory = clampPercent(a.memory_used);
+  const cpuAvg = Array.isArray(a.cpu_avg) ? a.cpu_avg.map(n => Number(n).toFixed(2)) : [];
+  const reachability = Array.isArray(a.reachability) ? a.reachability : [];
+
+  return `
+    <article class="aigateway-appliance">
+      <div class="aigateway-appliance-head">
+        <div>
+          <h3>${escapeHtml(a.name || 'AI Gateway')}</h3>
+          <p>${escapeHtml(a.host || '-')}</p>
+        </div>
+        <span class="aigateway-status aigateway-status--${status === 'connected' ? 'connected' : 'warning'}">${escapeHtml(status)}</span>
+      </div>
+
+      <div class="aigateway-appliance-layout">
+        <div class="aigateway-column">
+          ${renderAiGatewayUsageWidget('CPU used', cpu, renderAiGatewayLoadAverage(cpuAvg), 'cpu')}
+        </div>
+
+        <div class="aigateway-column">
+          ${renderAiGatewayUsageWidget('Memory used', memory, renderAiGatewayCurrentUsage(memory), 'memory')}
+        </div>
+
+        <div class="aigateway-column">
+          <div class="aigateway-ops-card">
+            <div class="aigateway-ops-grid">
+              ${renderAiGatewayOpsMetric('Uptime', `${Number(a.uptime_day || 0)} day${Number(a.uptime_day || 0) === 1 ? '' : 's'}`)}
+              ${renderAiGatewayLastSyncMetric(a.last_sync_time)}
+            </div>
+            <div class="aigateway-reachability-block">
+              <h4>Reachability</h4>
+              <div class="aigateway-reachability">
+                ${reachability.length ? reachability.map(renderAiGatewayReachabilityButton).join('') : '<span class="aigateway-muted">No reachability data</span>'}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </article>
+  `;
+}
+
+function renderAiGatewayUsageWidget(label, percent, detailHtml, type) {
+  const state = getAiGatewayUsageState(percent);
+  return `
+    <div class="aigateway-usage-card aigateway-usage-card--${escapeHtml(type)} aigateway-usage-card--${state.tone}" style="--gauge:${percent};">
+      <div class="aigateway-usage-topline">
+        <div class="aigateway-usage-title">
+          <span class="aigateway-usage-icon" aria-hidden="true">${renderAiGatewayMetricIcon(type)}</span>
+          <span>${escapeHtml(label)}</span>
+        </div>
+        <span class="aigateway-usage-state">${escapeHtml(state.label)}</span>
+      </div>
+      <div class="aigateway-usage-value"><strong>${percent}%</strong><span>${escapeHtml(state.description)}</span></div>
+      <div class="aigateway-usage-meter" aria-hidden="true"><span></span></div>
+      ${detailHtml}
+    </div>
+  `;
+}
+
+function renderAiGatewayCurrentUsage(memory) {
+  return `
+    <div class="aigateway-usage-detail">
+      <div class="aigateway-detail-head">
+        <span class="aigateway-card-eyebrow">Current usage</span>
+        <strong>${memory}%</strong>
+      </div>
+      <div class="aigateway-memory-scale" aria-hidden="true">
+        <span>0</span>
+        <span>50</span>
+        <span>100</span>
+      </div>
+    </div>
+  `;
+}
+
+function renderAiGatewayLoadAverage(values) {
+  const labels = ['1 min', '5 min', '15 min'];
+  const rows = labels.map((label, idx) => `
+    <div class="aigateway-load-row">
+      <span>${label}</span>
+      <strong>${escapeHtml(values[idx] || '-')}</strong>
+    </div>
+  `).join('');
+
+  return `
+    <div class="aigateway-usage-detail">
+      <div class="aigateway-detail-head">
+        <span class="aigateway-card-eyebrow">Load average</span>
+        <strong>${escapeHtml(values.join(' / ') || '-')}</strong>
+      </div>
+      <div class="aigateway-load-rows">${rows}</div>
+    </div>
+  `;
+}
+
+function renderAiGatewayMetricIcon(type) {
+  if (type === 'memory') {
+    return '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="6" y="6" width="12" height="12" rx="2"/><path d="M9 1v3"/><path d="M15 1v3"/><path d="M9 20v3"/><path d="M15 20v3"/><path d="M20 9h3"/><path d="M20 14h3"/><path d="M1 9h3"/><path d="M1 14h3"/></svg>';
+  }
+  return '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M4 13a8 8 0 1 1 16 0"/><path d="M12 13l4-4"/><path d="M3 21h18"/></svg>';
+}
+
+function getAiGatewayUsageState(percent) {
+  if (percent >= 85) return { tone: 'critical', label: 'Critical', description: 'Action needed' };
+  if (percent >= 70) return { tone: 'elevated', label: 'Elevated', description: 'Watch closely' };
+  return { tone: 'healthy', label: 'Healthy', description: 'Nominal load' };
+}
+
+function renderAiGatewayOpsMetric(label, value) {
+  return `
+    <div class="aigateway-ops-metric">
+      <span>${escapeHtml(label)}</span>
+      <strong>${escapeHtml(value)}</strong>
+    </div>
+  `;
+}
+
+function renderAiGatewayLastSyncMetric(value) {
+  const nextSyncAt = getAiGatewayNextSyncAt(value);
+  const attr = nextSyncAt ? ` data-next-sync-at="${nextSyncAt}"` : '';
+  return `
+    <div class="aigateway-ops-metric aigateway-ops-metric--sync">
+      <div class="aigateway-ops-metric-main">
+        <span>Last sync</span>
+        <strong>${escapeHtml(formatAiGatewayDate(value))}</strong>
+      </div>
+      <div class="aigateway-sync-countdown"${attr}>
+        <span>Next expected sync</span>
+        <strong>${escapeHtml(formatAiGatewaySyncCountdown(nextSyncAt))}</strong>
+      </div>
+    </div>
+  `;
+}
+
+function renderAiGatewayReachabilityButton(item) {
+  const rawStatus = String(item.status || '').trim().toLowerCase();
+  const label = rawStatus === 'linked' ? 'Linked' : 'Not-linked';
+  return `
+    <button type="button" class="aigateway-reachability-btn">
+      <span>${escapeHtml(item.name || '-')}</span>
+      <strong>${label}</strong>
+    </button>
+  `;
+}
+
+function clampPercent(value) {
+  const n = Number(value);
+  if (!Number.isFinite(n)) return 0;
+  return Math.max(0, Math.min(100, Math.round(n)));
+}
+
+function formatAiGatewayDate(value) {
+  if (!value) return '-';
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return value;
+  return date.toLocaleString();
+}
+
+let aigatewaySyncCountdownTimer = null;
+
+function getAiGatewayNextSyncAt(value) {
+  const date = new Date(value);
+  if (!value || Number.isNaN(date.getTime())) return null;
+  const intervalMs = 30 * 60 * 1000;
+  let nextSyncAt = date.getTime() + intervalMs;
+  const now = Date.now();
+  if (nextSyncAt <= now) {
+    nextSyncAt += (Math.floor((now - nextSyncAt) / intervalMs) + 1) * intervalMs;
+  }
+  return nextSyncAt;
+}
+
+function startAiGatewaySyncCountdowns() {
+  stopAiGatewaySyncCountdowns();
+  updateAiGatewaySyncCountdowns();
+  if (document.querySelector('[data-next-sync-at]')) {
+    aigatewaySyncCountdownTimer = setInterval(updateAiGatewaySyncCountdowns, 1000);
+  }
+}
+
+function stopAiGatewaySyncCountdowns() {
+  if (aigatewaySyncCountdownTimer) {
+    clearInterval(aigatewaySyncCountdownTimer);
+    aigatewaySyncCountdownTimer = null;
+  }
+}
+
+function updateAiGatewaySyncCountdowns() {
+  document.querySelectorAll('[data-next-sync-at]').forEach(el => {
+    const valueEl = el.querySelector('strong');
+    if (valueEl) valueEl.textContent = formatAiGatewaySyncCountdown(Number(el.dataset.nextSyncAt));
+  });
+}
+
+function formatAiGatewaySyncCountdown(nextSyncAt) {
+  if (!Number.isFinite(nextSyncAt)) return '-';
+  const remaining = Math.max(0, nextSyncAt - Date.now());
+  const minutes = Math.max(1, Math.ceil(remaining / 60000));
+  return `in ${minutes} minute${minutes === 1 ? '' : 's'}`;
 }
 
 // ── Model settings ──
@@ -4397,7 +4656,7 @@ let _adminI18n = null;
 async function loadAdminI18n() {
   if (_adminI18n) return _adminI18n;
   try {
-    const r = await fetch('/js/admin-i18n.json');
+    const r = await fetch('/js/admin-i18n.json?v=2');
     _adminI18n = await r.json();
   } catch (e) { _adminI18n = {}; }
   return _adminI18n;

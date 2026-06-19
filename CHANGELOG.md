@@ -1,5 +1,11 @@
 # Changelog
 
+## v1.1.5
+- Feature: **AI Gateway section** — new admin panel with live appliance status (CPU, memory, disk, version, uptime, reachability) fetched from the Netskope tenant API, filtered to the configured gateway host.
+- Feature: **Netskope Tenant panel** — API Token field now shows masked value (`••••` + last 4 chars) when a token is configured; empty when not.
+- UI: Netskope Tenant card renamed to "Netskope tenant RestAPI token".
+- Fix: HTTP request logging disabled (`autoLogging: false`) — console now only shows errors.
+
 ## v1.1.4
 - Fix: Docker crash on cold start — `challenge_attempts` indexes were created before the table existed (migration ordering bug). Indexes now created immediately after the table.
 

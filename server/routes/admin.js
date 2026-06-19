@@ -18,6 +18,17 @@ function randomParticipantIcon() {
   return PARTICIPANT_ICONS[Math.floor(Math.random() * PARTICIPANT_ICONS.length)];
 }
 
+function gatewayHostFromUrl(value) {
+  const raw = String(value || '').trim();
+  if (!raw) return '';
+  try {
+    const url = new URL(raw.includes('://') ? raw : `http://${raw}`);
+    return url.hostname.toLowerCase();
+  } catch {
+    return raw.replace(/^https?:\/\//i, '').split('/')[0].split(':')[0].toLowerCase();
+  }
+}
+
 // Delete a participant's Netskope token, then its token group. Tolerant of
 // eventual consistency (a group can briefly report "not empty" right after its
 // token is removed) by waiting and retrying the group deletion once.
@@ -946,6 +957,29 @@ router.get('/netskope/sync-preview', requireAdmin, async (req, res) => {
       ns.listTokens(tenant, apiToken)
     ]);
     res.json({ groups: groups.elements || [], tokens: tokens.elements || [] });
+  } catch (e) {
+    res.status(502).json({ error: e.message });
+  }
+});
+
+router.get('/netskope/appliances', requireAdmin, async (req, res) => {
+  const { tenant, apiToken } = ns.getNetskopeConfig();
+  if (!tenant || !apiToken) return res.status(400).json({ error: 'Netskope tenant and API token not configured' });
+  const gatewayUrl = db.prepare("SELECT value FROM settings WHERE key = 'gateway_url'").get()?.value || '';
+  const configuredHost = gatewayHostFromUrl(gatewayUrl);
+  if (!configuredHost) return res.status(400).json({ error: 'AI Gateway URL not configured' });
+  try {
+    const data = await ns.listAppliances(tenant, apiToken);
+    const allElements = data.elements || [];
+    const elements = allElements.filter(a => String(a.host || '').trim().toLowerCase() === configuredHost);
+    res.json({
+      tenant,
+      configured_gateway_host: configuredHost,
+      fetched_at: new Date().toISOString(),
+      total_count: elements.length,
+      tenant_total_count: data.total_count || allElements.length,
+      elements
+    });
   } catch (e) {
     res.status(502).json({ error: e.message });
   }

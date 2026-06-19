@@ -597,7 +597,11 @@
         <span data-i18n="nav_challenges">Challenges</span>
       </button>
 
-      <div class="adm-nav-label" data-i18n="nav_group_netskope">Netskope</div>
+      <div class="adm-nav-label" data-i18n="nav_group_netskope">Netskope Tenant</div>
+      <button class="adm-nav-item" onclick="adminTab('aigateway')" id="tab-aigateway">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L2 12h4v10h12V12h4z"/><path d="M9 22v-6h6v6"/></svg>
+        <span data-i18n="nav_ai_gateway">AI Gateway</span>
+      </button>
       <button class="adm-nav-item" onclick="adminTab('apikeys')" id="tab-apikeys">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"/></svg>
         <span data-i18n="nav_gw_tokens">GW Tokens</span>
@@ -1496,7 +1500,7 @@
           <div class="settings-product-copy">
             <span class="settings-product-kicker">Workshop configuration</span>
             <h2>Global operating settings</h2>
-            <p>Configure tenant connectivity, shared gateway routing and cloud template sources for this lab environment.</p>
+            <p>Configure cloud template sources and local maintenance controls for this lab environment.</p>
           </div>
           <div class="standard-hero-actions settings-hero-actions">
             <button class="settings-help-tile" onclick="openHelpSidebar('settings')" title="Open Help" aria-label="Open Global Settings help">
@@ -1506,60 +1510,6 @@
         </div>
       </div>
       <div class="settings-console">
-        <div class="settings-settings-group settings-settings-group--connectivity">
-        <div class="adm-card settings-console-card">
-          <div class="adm-card-header">
-            <span class="adm-card-title" data-i18n="settings_tenant_card">Netskope Tenant</span>
-          </div>
-          <div class="settings-card-body">
-            <div class="field-group">
-              <label data-i18n="settings_tenant_hostname">Tenant hostname</label>
-              <input type="text" id="ns-tenant" placeholder="yourcompany.goskope.com" />
-            </div>
-            <div class="field-group">
-              <label data-i18n="settings_api_token_label">API Token</label>
-              <input type="password" id="ns-api-token" placeholder="Paste token to update" autocomplete="off" data-1p-ignore data-lpignore="true" data-form-type="other" />
-            </div>
-            <div class="settings-compact-actions">
-              <span id="ns-save-msg" class="settings-inline-status" style="display:none;"></span>
-              <button class="btn-secondary btn-icon" onclick="testNetskopeConnection()">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
-                <span data-i18n="btn_test">Test</span>
-              </button>
-              <button class="btn-primary btn-icon" onclick="saveNetskopeSettings()">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
-                Save
-              </button>
-            </div>
-          </div>
-        </div>
-
-        <div class="adm-card settings-console-card">
-          <div class="adm-card-header">
-            <span class="adm-card-title" data-i18n="settings_gw_card">Netskope AI Gateway</span>
-          </div>
-          <div class="settings-card-body">
-            <div class="field-group">
-              <label data-i18n="settings_gw_url_label">Gateway URL</label>
-              <input type="text" id="admin-gateway-url" placeholder="http://aigateway.lab:8080" />
-              <span class="field-hint">Shared with all participants.</span>
-            </div>
-            <div class="settings-compact-actions">
-              <span id="gateway-test-msg" class="settings-inline-status" style="display:none;"></span>
-              <span id="gateway-save-msg" class="settings-save-msg settings-inline-status">Saved!</span>
-              <button class="btn-secondary btn-icon" onclick="testGatewayUrl()">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
-                <span data-i18n="btn_test">Test</span>
-              </button>
-              <button class="btn-primary btn-icon" onclick="saveGatewayUrl()">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
-                Save
-              </button>
-            </div>
-          </div>
-        </div>
-        </div>
-
         <div class="settings-settings-group settings-settings-group--templates">
         <div class="adm-card settings-console-card">
           <div class="adm-card-header">
@@ -1652,6 +1602,90 @@
               <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-3.5"/></svg>
               <span data-i18n="settings_factory_reset">Factory Reset</span>
             </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── AI Gateway ── -->
+    <div class="admin-section" id="section-aigateway">
+      <div class="adm-card settings-product-card">
+        <div class="settings-product-hero">
+          <div class="settings-product-copy">
+            <span class="settings-product-kicker">Netskope Tenant</span>
+            <h2>AI Gateway</h2>
+            <p>Configure tenant API connectivity and the shared gateway URL used by participants.</p>
+          </div>
+          <div class="standard-hero-actions settings-hero-actions">
+            <button class="settings-help-tile" onclick="openHelpSidebar('settings')" title="Open Help" aria-label="Open AI Gateway help">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
+            </button>
+          </div>
+        </div>
+      </div>
+      <div class="settings-console">
+        <div class="adm-card settings-console-card">
+          <div class="adm-card-header">
+            <span class="adm-card-title" data-i18n="settings_tenant_card">Netskope Tenant</span>
+          </div>
+          <div class="settings-card-body">
+            <div class="field-group">
+              <label data-i18n="settings_tenant_hostname">Tenant hostname</label>
+              <input type="text" id="ns-tenant" placeholder="yourcompany.goskope.com" />
+            </div>
+            <div class="field-group">
+              <label data-i18n="settings_api_token_label">API Token</label>
+              <input type="password" id="ns-api-token" placeholder="Paste token to update" autocomplete="off" data-1p-ignore data-lpignore="true" data-form-type="other" />
+            </div>
+            <div class="settings-compact-actions">
+              <span id="ns-save-msg" class="settings-inline-status" style="display:none;"></span>
+              <button class="btn-secondary btn-icon" onclick="testNetskopeConnection()">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
+                <span data-i18n="btn_test">Test</span>
+              </button>
+              <button class="btn-primary btn-icon" onclick="saveNetskopeSettings()">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+                Save
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div class="adm-card settings-console-card">
+          <div class="adm-card-header">
+            <span class="adm-card-title" data-i18n="settings_gw_card">Netskope AI Gateway</span>
+          </div>
+          <div class="settings-card-body">
+            <div class="field-group">
+              <label data-i18n="settings_gw_url_label">Gateway URL</label>
+              <input type="text" id="admin-gateway-url" placeholder="http://aigateway.lab:8080" />
+              <span class="field-hint">Shared with all participants.</span>
+            </div>
+            <div class="settings-compact-actions">
+              <span id="gateway-test-msg" class="settings-inline-status" style="display:none;"></span>
+              <span id="gateway-save-msg" class="settings-save-msg settings-inline-status">Saved!</span>
+              <button class="btn-secondary btn-icon" onclick="testGatewayUrl()">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
+                <span data-i18n="btn_test">Test</span>
+              </button>
+              <button class="btn-primary btn-icon" onclick="saveGatewayUrl()">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+                Save
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div class="adm-card settings-console-card aigateway-monitor-card">
+          <div class="adm-card-header aigateway-monitor-header">
+            <span class="adm-card-title">AI Gateway Status</span>
+            <button class="btn-secondary btn-icon" id="aigw-monitor-refresh" onclick="loadAiGatewayMonitor()">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M21 2v6h-6"/><path d="M3 12a9 9 0 0 1 15-6.7L21 8"/><path d="M3 22v-6h6"/><path d="M21 12a9 9 0 0 1-15 6.7L3 16"/></svg>
+              Refresh
+            </button>
+          </div>
+          <div class="settings-card-body aigateway-monitor-body" id="aigw-monitor-body">
+            <div class="aigateway-monitor-empty">Open this section to load appliance status.</div>
           </div>
         </div>
       </div>
@@ -2532,7 +2566,7 @@
 </div>
 
 <script src="/js/i18n.js?v=8"></script>
-<script src="/js/app.js?v=8"></script>
+<script src="/js/app.js?v=9"></script>
 
 <!-- API Token Modal -->
 <div id="aip-token-modal" style="display:none;position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,0.7);backdrop-filter:blur(4px);align-items:center;justify-content:center;">
