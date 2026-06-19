@@ -117,8 +117,6 @@ db.exec(`
 db.exec(`
   CREATE INDEX IF NOT EXISTS idx_completions_participant    ON challenge_completions(participant_code);
   CREATE INDEX IF NOT EXISTS idx_completions_challenge      ON challenge_completions(challenge_id);
-  CREATE INDEX IF NOT EXISTS idx_attempts_participant       ON challenge_attempts(participant_code);
-  CREATE INDEX IF NOT EXISTS idx_attempts_part_ch          ON challenge_attempts(participant_code, challenge_id);
   CREATE INDEX IF NOT EXISTS idx_messages_conversation      ON messages(conversation_id);
   CREATE INDEX IF NOT EXISTS idx_conversations_access_code  ON conversations(access_code);
 `);
@@ -175,6 +173,10 @@ db.exec(`CREATE TABLE IF NOT EXISTS challenge_attempts (
   challenge_id INTEGER NOT NULL,
   attempted_at DATETIME DEFAULT CURRENT_TIMESTAMP
 )`);
+db.exec(`
+  CREATE INDEX IF NOT EXISTS idx_attempts_participant ON challenge_attempts(participant_code);
+  CREATE INDEX IF NOT EXISTS idx_attempts_part_ch     ON challenge_attempts(participant_code, challenge_id);
+`);
 try { db.exec(`ALTER TABLE prompt_library ADD COLUMN sort_order INTEGER`); } catch {}
 try { db.exec(`ALTER TABLE access_codes ADD COLUMN icon TEXT`); } catch {}
 try { db.exec(`ALTER TABLE challenges ADD COLUMN hint TEXT DEFAULT NULL`); } catch {}
