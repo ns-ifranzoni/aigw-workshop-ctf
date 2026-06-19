@@ -1,13 +1,26 @@
 const express = require('express');
 const cors = require('cors');
+const compression = require('compression');
 const path = require('path');
+const pinoHttp = require('pino-http');
 const swaggerUi = require('swagger-ui-express');
 const swaggerSpec = require('./openapi');
+const logger = require('./logger');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-app.use(cors());
+// Structured request logging (skip /api/health to avoid noise)
+app.use(pinoHttp({ logger, autoLogging: { ignore: (req) => req.url === '/api/health' } }));
+
+// CORS: allow only the explicitly configured origin (defaults to same-origin / disabled).
+// Set ALLOWED_ORIGIN=https://your-domain.com when the API is accessed from a different host.
+const corsOrigin = process.env.ALLOWED_ORIGIN || false;
+app.use(cors({ origin: corsOrigin }));
+
+// Gzip/brotli compression for all responses — most impactful for large JS/CSS assets.
+app.use(compression());
+
 app.use(express.json());
 app.use(express.static(path.join(__dirname, '../public')));
 
@@ -53,6 +66,6 @@ app.get('*', (req, res) => {
 });
 
 app.listen(PORT, () => {
-  console.log(`Workshop & CTF All in One running at http://localhost:${PORT}`);
-  console.log(`Default admin username: ADMIN-2026 (no default password — set one on first sign-in)`);
+  logger.info(`Workshop & CTF All in One running at http://localhost:${PORT}`);
+  logger.info('Default admin username: ADMIN-2026 (no default password — set one on first sign-in)');
 });

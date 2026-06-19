@@ -1,9 +1,15 @@
 const Database = require('better-sqlite3');
 const path = require('path');
+const { PARTICIPANT_ICONS } = require('./constants');
 
 const dataDir = path.join(__dirname, '../data');
 require('fs').mkdirSync(dataDir, { recursive: true });
 const db = new Database(path.join(dataDir, 'data.db'));
+
+// WAL mode: allows concurrent readers + one writer without blocking each other.
+// NORMAL sync is safe under WAL and significantly faster than FULL.
+db.pragma('journal_mode = WAL');
+db.pragma('synchronous = NORMAL');
 
 db.exec(`
   CREATE TABLE IF NOT EXISTS access_codes (
@@ -107,6 +113,16 @@ db.exec(`
   );
 `);
 
+// Performance indexes — created with IF NOT EXISTS so they're idempotent on restart.
+db.exec(`
+  CREATE INDEX IF NOT EXISTS idx_completions_participant    ON challenge_completions(participant_code);
+  CREATE INDEX IF NOT EXISTS idx_completions_challenge      ON challenge_completions(challenge_id);
+  CREATE INDEX IF NOT EXISTS idx_attempts_participant       ON challenge_attempts(participant_code);
+  CREATE INDEX IF NOT EXISTS idx_attempts_part_ch          ON challenge_attempts(participant_code, challenge_id);
+  CREATE INDEX IF NOT EXISTS idx_messages_conversation      ON messages(conversation_id);
+  CREATE INDEX IF NOT EXISTS idx_conversations_access_code  ON conversations(access_code);
+`);
+
 // Migrate: rebuild api_keys if key column still has UNIQUE NOT NULL (old schema)
 const colInfo = db.prepare("PRAGMA table_info(api_keys)").all();
 const keyCol = colInfo.find(c => c.name === 'key');
@@ -200,15 +216,6 @@ try {
 } catch {}
 
 // Assign a random fun icon to any participant that doesn't have one yet
-const PARTICIPANT_ICONS = [
-  '🦊','🐼','🦁','🐯','🐸','🐙','🦋','🦖','🐳','🦀','🦔','🐺','🦅','🦚',
-  '🐲','🦜','🦩','🐊','🐘','🦭','🦦','🐧','🦉','🐝','🦕','🐡','🦬','🐻','🤖','👾',
-  '🐨','🦘','🐬','🦈','🐆','🦓','🦒','🐪','🦏','🦛','🐃','🐂','🦌','🐏','🐐',
-  '🦙','🐿','🦡','🦫','🦎','🐍','🐢','🦞','🦐','🦑','🐠','🐟','🕷','🦂','🐛',
-  '🦗','🪲','🪳','🐌','🦟','🪰','🐞','🐜','🪱','🌈','🔥','⚡','🌊','🍄','🎃',
-  '👻','🤡','🎯','🎲','🎮','🕹','🧩','🃏','🎪','🎭','🤿','🥷',
-  '🦠','🧸','🎠','🚀','🛸','🧲','🪄','🎩','🦴','🧨','🪅','🎆','🦶'
-];
 try {
   const participantsWithoutIcon = db.prepare("SELECT id FROM access_codes WHERE role = 'participant' AND (icon IS NULL OR icon = '')").all();
   const updateIcon = db.prepare('UPDATE access_codes SET icon = ? WHERE id = ?');
@@ -326,6 +333,21 @@ try {
 // Migrate: update role value 'student' → 'participant' in access_codes
 try {
   db.prepare("UPDATE access_codes SET role = 'participant' WHERE role = 'student'").run();
+} catch(e) {}
+
+// Migrate: fix stale template URLs that still point to the old repo name
+// (aigwworkshopctf → aigw-workshop-ctf, renamed when the project went public).
+try {
+  const OLD_REPO = 'ns-ifranzoni/aigwworkshopctf';
+  const NEW_REPO = 'ns-ifranzoni/aigw-workshop-ctf';
+  const templateKeys = ['prompt_library_template_url', 'challenges_template_url'];
+  for (const key of templateKeys) {
+    const row = db.prepare('SELECT value FROM settings WHERE key = ?').get(key);
+    if (row && row.value.includes(OLD_REPO)) {
+      db.prepare('UPDATE settings SET value = ? WHERE key = ?')
+        .run(row.value.replace(OLD_REPO, NEW_REPO), key);
+    }
+  }
 } catch(e) {}
 
 module.exports = db;

@@ -4,6 +4,7 @@ const bcrypt = require('bcryptjs');
 const db = require('../db');
 const ns = require('../netskope');
 const { JWT_SECRET, SESSION_VERSION } = require('../middleware/auth');
+const { PARTICIPANT_ICONS } = require('../constants');
 
 const router = express.Router();
 
@@ -100,22 +101,10 @@ router.post('/register', async (req, res) => {
 
   const password_hash = await bcrypt.hash(password, 10);
 
-  // Pick icon
-  const PARTICIPANT_ICONS = [
-    '🦊','🐼','🦁','🐯','🐸','🐙','🦋','🦖','🐳','🦀','🦔','🐺','🦅','🦚',
-    '🐲','🦜','🦩','🐊','🐘','🦭','🦦','🐧','🦉','🐝','🦕','🐡','🦬','🐻','🤖','👾',
-    '🐨','🦘','🐬','🦈','🐆','🦓','🦒','🐪','🦏','🦛','🐃','🐂','🦌','🐏','🐐',
-    '🦙','🐿','🦡','🦫','🦎','🐍','🐢','🦞','🦐','🦑','🐠','🐟','🕷','🦂','🐛',
-    '🦗','🪲','🪳','🐌','🦟','🪰','🐞','🐜','🪱','🌈','🔥','⚡','🌊','🍄','🎃',
-    '👻','🤡','🎯','🎲','🎮','🕹','🧩','🃏','🎪','🎭','🤿','🥷',
-    '🦠','🧸','🎠','🚀','🛸','🧲','🪄','🎩','🦴','🧨','🪅','🎆','🦶'
-  ];
-  const usedIcons = new Set(
-    db.prepare("SELECT icon FROM access_codes WHERE role = 'participant' AND icon IS NOT NULL AND icon != ''").all().map(r => r.icon)
-  );
-  const availableIcons = PARTICIPANT_ICONS.filter(i => !usedIcons.has(i));
-  const iconPool = availableIcons.length > 0 ? availableIcons : PARTICIPANT_ICONS;
-  const icon = iconPool[Math.floor(Math.random() * iconPool.length)];
+  // Pick a random icon. With 100+ icons for a typical workshop size, collisions
+  // are rare and cosmetic. Avoiding the SELECT here removes a DB round-trip and
+  // the race condition that could assign the same icon to concurrent registrations.
+  const icon = PARTICIPANT_ICONS[Math.floor(Math.random() * PARTICIPANT_ICONS.length)];
 
   // Create participant record first (no token yet)
   db.prepare(

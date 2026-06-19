@@ -1,6 +1,7 @@
 const express = require('express');
 const db = require('../db');
 const { requireAdmin, requireAuth } = require('../middleware/auth');
+const { getSetting, setSetting } = require('../settings-cache');
 
 const router = express.Router();
 
@@ -42,13 +43,7 @@ router.get('/registration-status', (req, res) => {
   res.json({ open: row?.value === '1' || row?.value === 'true' });
 });
 
-// ── Settings helpers ──
-function getSetting(key) {
-  return db.prepare('SELECT value FROM settings WHERE key = ?').get(key)?.value;
-}
-function setSetting(key, value) {
-  db.prepare("INSERT INTO settings (key, value) VALUES (?, ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value").run(key, String(value));
-}
+// getSetting / setSetting provided by settings-cache (with 5 s TTL + write invalidation)
 
 // ── Variable interpolation for text challenges ──
 function interpolateVariables(text, participantCode) {

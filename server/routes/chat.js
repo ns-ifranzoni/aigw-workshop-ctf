@@ -2,6 +2,7 @@ const express = require('express');
 const db = require('../db');
 const { requireAuth } = require('../middleware/auth');
 const { v4: uuidv4 } = require('uuid');
+const { getSetting } = require('../settings-cache');
 
 const router = express.Router();
 
@@ -126,7 +127,6 @@ router.post('/conversations/:id/send', requireAuth, async (req, res) => {
   const history = db.prepare(
     'SELECT role, content FROM messages WHERE conversation_id = ? ORDER BY created_at ASC'
   ).all(req.params.id);
-  const getSetting = key => db.prepare('SELECT value FROM settings WHERE key = ?').get(key)?.value || '';
   const configuredGatewayUrl = (getSetting('gateway_url') || 'http://localhost:8080').replace(/\/+$/, '');
   const selectedProvider = providerFromModel(model);
   if (mode !== 'mcp' && !visibleProviderKeys().has(selectedProvider)) {

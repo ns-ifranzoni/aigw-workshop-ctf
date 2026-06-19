@@ -1,29 +1,21 @@
 const express = require('express');
 const path = require('path');
+const bcrypt = require('bcryptjs');
 const { v4: uuidv4 } = require('uuid');
 const db = require('../db');
 const { requireAdmin } = require('../middleware/auth');
 const ns = require('../netskope');
 const PARTICIPANT_NAMES = require('../participant-names');
+const { PARTICIPANT_ICONS } = require('../constants');
+const logger = require('../logger');
 
 const router = express.Router();
 
-const PARTICIPANT_ICONS = [
-  '🦊','🐼','🦁','🐯','🐸','🐙','🦋','🦖','🐳','🦀','🦔','🐺','🦅','🦚',
-  '🐲','🦜','🦩','🐊','🐘','🦭','🦦','🐧','🦉','🐝','🦕','🐡','🦬','🐻','🤖','👾',
-  '🐨','🦘','🐬','🦈','🐆','🦓','🦒','🐪','🦏','🦛','🐃','🐂','🦌','🐏','🐐',
-  '🦙','🐿','🦡','🦫','🦎','🐍','🐢','🦞','🦐','🦑','🐠','🐟','🕷','🦂','🐛',
-  '🦗','🪲','🪳','🐌','🦟','🪰','🐞','🐜','🪱','🌈','🔥','⚡','🌊','🍄','🎃',
-  '👻','🤡','🎯','🎲','🎮','🕹','🧩','🃏','🎪','🎭','🤿','🥷',
-  '🦠','🧸','🎠','🚀','🛸','🧲','🪄','🎩','🦴','🧨','🪅','🎆','🦶'
-];
+// Pick randomly from the full icon pool. With 100+ icons and typical workshop
+// sizes collisions are rare and cosmetic, and avoiding the SELECT removes a DB
+// round-trip plus the race between concurrent registrations.
 function randomParticipantIcon() {
-  const usedIcons = new Set(
-    db.prepare("SELECT icon FROM access_codes WHERE role = 'participant' AND icon IS NOT NULL").all().map(r => r.icon)
-  );
-  const available = PARTICIPANT_ICONS.filter(i => !usedIcons.has(i));
-  const pool = available.length > 0 ? available : PARTICIPANT_ICONS;
-  return pool[Math.floor(Math.random() * pool.length)];
+  return PARTICIPANT_ICONS[Math.floor(Math.random() * PARTICIPANT_ICONS.length)];
 }
 
 // Delete a participant's Netskope token, then its token group. Tolerant of
@@ -146,13 +138,12 @@ router.patch('/admins/:code/disable', requireAdmin, (req, res) => {
   res.json({ ok: true, disabled: !disabled });
 });
 
-router.post('/admins/:code/reset-password', requireAdmin, (req, res) => {
+router.post('/admins/:code/reset-password', requireAdmin, async (req, res) => {
   const code = req.params.code.toUpperCase();
   const row = db.prepare("SELECT id FROM access_codes WHERE code = ? AND role = 'admin'").get(code);
   if (!row) return res.status(404).json({ error: 'Admin not found' });
-  const bcrypt = require('bcryptjs');
   const newPass = require('crypto').randomBytes(6).toString('hex').toUpperCase();
-  const hash = bcrypt.hashSync(newPass, 10);
+  const hash = await bcrypt.hash(newPass, 10);
   db.prepare("UPDATE access_codes SET password_hash = ? WHERE code = ?").run(hash, code);
   res.json({ ok: true, password: newPass });
 });
@@ -166,7 +157,7 @@ router.post('/admins/:code/regenerate-token', requireAdmin, (req, res) => {
   res.json({ ok: true, token });
 });
 
-router.post('/codes', requireAdmin, (req, res) => {
+router.post('/codes', requireAdmin, async (req, res) => {
   const { code, api_key, role, label } = req.body;
   const isAdmin = role === 'admin';
   if (!code || (!isAdmin && !api_key)) return res.status(400).json({ error: 'code and api_key are required' });
@@ -184,9 +175,8 @@ router.post('/codes', requireAdmin, (req, res) => {
     const upperCode = code.trim().toUpperCase();
     const keyVal = isAdmin ? require('crypto').randomBytes(24).toString('hex') : api_key.trim();
     const icon = isAdmin ? null : randomParticipantIcon();
-    const bcrypt = require('bcryptjs');
     const defaultPass = isAdmin ? require('crypto').randomBytes(6).toString('hex').toUpperCase() : null;
-    const passHash = isAdmin ? bcrypt.hashSync(defaultPass, 10) : null;
+    const passHash = isAdmin ? await bcrypt.hash(defaultPass, 10) : null;
     const labelVal = isAdmin ? (label?.trim() || null) : null;
     db.prepare('INSERT INTO access_codes (code, api_key, label, role, icon, username, password_hash) VALUES (?, ?, ?, ?, ?, ?, ?)')
       .run(upperCode, keyVal, labelVal, isAdmin ? 'admin' : 'participant', icon, isAdmin ? upperCode : null, passHash);
@@ -202,7 +192,6 @@ router.post('/codes', requireAdmin, (req, res) => {
 // token group/token following the same mnemonic as self-registration
 // (Participant-Group-<name> / Participant-Token-<name>).
 router.post('/participants/bulk', requireAdmin, async (req, res) => {
-  const bcrypt = require('bcryptjs');
   const n = parseInt(req.body?.count, 10);
   if (!n || n < 1 || n > 25) {
     return res.status(400).json({ error: 'count must be between 1 and 25' });
@@ -2305,7 +2294,7 @@ router.post('/settings/clear-database', requireAdmin, (req, res) => {
   res.json({ ok: true });
 });
 
-router.post('/demo-data', requireAdmin, (req, res) => {
+router.post('/demo-data', requireAdmin, async (req, res) => {
   // Create 10 demo challenges if fewer than 10 visible ones exist
   const demoPrompts = [
     '[Demo] Explain what Netskope AI Gateway does in two sentences.',
@@ -2409,9 +2398,8 @@ router.post('/demo-data', requireAdmin, (req, res) => {
     [6, 3],  [11, 0], [3, 7],  [7, 1], [0, 0],
   ];
 
-  const bcryptDemo = require('bcryptjs');
   // Pre-compute hashes outside the transaction to avoid holding a write lock during CPU-intensive work
-  const demoHashes = demoParticipants.map(p => bcryptDemo.hashSync(p.code, 10));
+  const demoHashes = await Promise.all(demoParticipants.map(p => bcrypt.hash(p.code, 10)));
   const upsertCode = db.prepare(`
     INSERT INTO access_codes (code, label, role, api_key, icon, username, password_hash) VALUES (?, ?, 'participant', '', ?, ?, ?)
     ON CONFLICT(code) DO UPDATE SET icon = excluded.icon, username = excluded.username, password_hash = excluded.password_hash

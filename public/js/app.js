@@ -5202,7 +5202,7 @@ function startCtfTimer() {
   if (_timerPollStarted) return;
   _timerPollStarted = true;
   pollCtfTimer();
-  setInterval(pollCtfTimer, 4000);
+  setInterval(pollCtfTimer, 10000);
   setInterval(tickCtfTimer, 1000);
 }
 

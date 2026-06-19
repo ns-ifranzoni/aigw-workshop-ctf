@@ -1,6 +1,8 @@
 node_modules/
 data/*.db
 data/*.sqlite
+server/*.db
+server/*.sqlite
 .env
 .DS_Store
 .firecrawl/
