@@ -1221,8 +1221,8 @@ router.delete('/conversations', requireAdmin, (req, res) => {
 
 // ── Prompt Library ────────────────────────────────────────
 
-const PROMPT_LIBRARY_TEMPLATE_URL_DEFAULT = 'https://raw.githubusercontent.com/ns-ifranzoni/aigwworkshopctf/main/data/templates/prompt-library.csv';
-const CHALLENGES_TEMPLATE_URL_DEFAULT = 'https://raw.githubusercontent.com/ns-ifranzoni/aigwworkshopctf/main/data/templates/challenges.csv';
+const PROMPT_LIBRARY_TEMPLATE_URL_DEFAULT = 'https://raw.githubusercontent.com/ns-ifranzoni/aigw-workshop-ctf/main/data/templates/prompt-library.csv';
+const CHALLENGES_TEMPLATE_URL_DEFAULT = 'https://raw.githubusercontent.com/ns-ifranzoni/aigw-workshop-ctf/main/data/templates/challenges.csv';
 
 function getTemplateUrl(key, defaultUrl) {
   return db.prepare("SELECT value FROM settings WHERE key = ?").get(key)?.value || defaultUrl;
@@ -2614,7 +2614,7 @@ router.get('/update/check', requireAdmin, async (req, res) => {
   try {
     const local = getLocalVersion();
     const fetch = (await import('node-fetch')).default;
-    const ghRes = await fetch('https://api.github.com/repos/ns-ifranzoni/aigwworkshopctf/releases/latest', {
+    const ghRes = await fetch('https://api.github.com/repos/ns-ifranzoni/aigw-workshop-ctf/releases/latest', {
       headers: { 'User-Agent': 'aigw-workshop' }, signal: AbortSignal.timeout(8000)
     });
     if (!ghRes.ok) return res.status(500).json({ error: `GitHub API error: ${ghRes.status}` });
