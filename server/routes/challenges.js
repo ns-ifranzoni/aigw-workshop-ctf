@@ -690,6 +690,80 @@ router.post('/participant/:id/check', requireAuth, async (req, res) => {
         return true;
       });
 
+    } else if (challenge.challenge_type === 'policy_dlp') {
+      // ── Policy · DLP: verify a matching DLP rule exists ──
+      const tenant = db.prepare("SELECT value FROM settings WHERE key = 'netskope_tenant'").get()?.value;
+      const apiToken = db.prepare("SELECT value FROM settings WHERE key = 'netskope_api_token'").get()?.value;
+      if (!tenant || !apiToken) return res.status(400).json({ error: 'Netskope not configured' });
+
+      const tokenGroupId = db.prepare('SELECT netskope_token_group_id FROM api_keys WHERE assigned_to = ?').get(code)?.netskope_token_group_id;
+
+      const fetch = (await import('node-fetch')).default;
+      const baseUrl = `https://${tenant.replace(/^https?:\/\//, '')}`;
+
+      const rulesRes = await fetch(`${baseUrl}/api/v2/policy/aig/dlp/rules`, {
+        headers: { 'Content-Type': 'application/json', 'Netskope-Api-Token': apiToken }
+      });
+      const rulesData = await rulesRes.json();
+      const rules = rulesData.elements || [];
+
+      found = rules.some(rule => {
+        if (tokenGroupId && !(rule.criteria?.token_group_ids || []).includes(tokenGroupId)) return false;
+        if (challenge.ch_activity) {
+          const act = challenge.ch_activity.toLowerCase();
+          if (!(rule.criteria?.activities || []).includes(act)) return false;
+        }
+        if (challenge.ch_gateway_action) {
+          const action = challenge.ch_gateway_action.toLowerCase();
+          if (rule.actions?.rule_action?.action_name !== action) return false;
+        }
+        if (challenge.ch_model) {
+          const model = challenge.ch_model.trim();
+          const modelMatch = (rule.criteria?.ai_provider_models || []).some(m =>
+            (m.match_values || []).includes(model)
+          );
+          if (!modelMatch) return false;
+        }
+        return true;
+      });
+
+    } else if (challenge.challenge_type === 'policy_guardrails') {
+      // ── Policy · Guardrails: verify a matching guardrails rule exists ──
+      const tenant = db.prepare("SELECT value FROM settings WHERE key = 'netskope_tenant'").get()?.value;
+      const apiToken = db.prepare("SELECT value FROM settings WHERE key = 'netskope_api_token'").get()?.value;
+      if (!tenant || !apiToken) return res.status(400).json({ error: 'Netskope not configured' });
+
+      const tokenGroupId = db.prepare('SELECT netskope_token_group_id FROM api_keys WHERE assigned_to = ?').get(code)?.netskope_token_group_id;
+
+      const fetch = (await import('node-fetch')).default;
+      const baseUrl = `https://${tenant.replace(/^https?:\/\//, '')}`;
+
+      const rulesRes = await fetch(`${baseUrl}/api/v2/policy/aig/aiguardrails/rules`, {
+        headers: { 'Content-Type': 'application/json', 'Netskope-Api-Token': apiToken }
+      });
+      const rulesData = await rulesRes.json();
+      const rules = rulesData.elements || [];
+
+      found = rules.some(rule => {
+        if (tokenGroupId && !(rule.criteria?.token_group_ids || []).includes(tokenGroupId)) return false;
+        if (challenge.ch_activity) {
+          const act = challenge.ch_activity.toLowerCase();
+          if (!(rule.criteria?.activities || []).includes(act)) return false;
+        }
+        if (challenge.ch_gateway_action) {
+          const action = challenge.ch_gateway_action.toLowerCase();
+          if (rule.actions?.rule_action?.action_name !== action) return false;
+        }
+        if (challenge.ch_model) {
+          const model = challenge.ch_model.trim();
+          const modelMatch = (rule.criteria?.ai_provider_models || []).some(m =>
+            (m.match_values || []).includes(model)
+          );
+          if (!modelMatch) return false;
+        }
+        return true;
+      });
+
     } else {
       // ── Events (event_*): query the AI Gateway events API ──
       const tenant = db.prepare("SELECT value FROM settings WHERE key = 'netskope_tenant'").get()?.value;
