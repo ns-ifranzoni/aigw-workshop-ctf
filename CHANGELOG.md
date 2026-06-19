@@ -1,5 +1,8 @@
 # Changelog
 
+## v1.1.6
+- UI: Font changed from Arial to Lato (Google Fonts, sans-serif) across the entire UI.
+
 ## v1.1.5
 - Feature: **AI Gateway section** — new admin panel with live appliance status (CPU, memory, disk, version, uptime, reachability) fetched from the Netskope tenant API, filtered to the configured gateway host.
 - Feature: **Netskope Tenant panel** — API Token field now shows masked value (`••••` + last 4 chars) when a token is configured; empty when not.
