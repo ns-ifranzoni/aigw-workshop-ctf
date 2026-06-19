@@ -1,6 +1,6 @@
 const express = require('express');
 const jwt = require('jsonwebtoken');
-const bcrypt = require('bcryptjs');
+const bcrypt = require('bcrypt');
 const db = require('../db');
 const ns = require('../netskope');
 const { JWT_SECRET, SESSION_VERSION } = require('../middleware/auth');

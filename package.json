@@ -9,7 +9,7 @@
     "dev": "nodemon server/index.js"
   },
   "dependencies": {
-    "bcryptjs": "^3.0.3",
+    "bcrypt": "^6.0.0",
     "better-sqlite3": "^9.4.3",
     "compression": "^1.8.1",
     "cors": "^2.8.5",
