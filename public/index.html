@@ -446,23 +446,36 @@
           </button>
         </div>
 
+        <!-- AI Gateway next sync banner -->
+        <div class="config-section">
+          <div class="config-section-title">Netskope AI Gateway</div>
+          <div class="config-sync-banner" id="config-sync-banner" style="display:none;">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M4 13a8 8 0 1 1 16 0"/><path d="M12 13l4-4"/><path d="M3 21h18"/></svg>
+            <span id="config-sync-label">Next expected sync</span>
+            <strong id="config-sync-value" data-next-sync-at="">—</strong>
+          </div>
+        </div>
+
         <!-- Live session summary — reads first as state, then the form below -->
-        <div class="config-summary" id="config-summary">
-          <div class="config-summary-row">
-            <span class="config-summary-label">Route</span>
-            <span class="config-summary-val" id="cfg-sum-route">—</span>
-          </div>
-          <div class="config-summary-row">
-            <span class="config-summary-label">Mode</span>
-            <span class="config-summary-val" id="cfg-sum-mode">—</span>
-          </div>
-          <div class="config-summary-row">
-            <span class="config-summary-label" id="cfg-sum-target-label">Model</span>
-            <span class="config-summary-val" id="cfg-sum-target">—</span>
-          </div>
-          <div class="config-summary-row">
-            <span class="config-summary-label">GW Token</span>
-            <span class="config-summary-val" id="cfg-sum-token">—</span>
+        <div class="config-section">
+          <div class="config-section-title">Current config</div>
+          <div class="config-summary" id="config-summary">
+            <div class="config-summary-row">
+              <span class="config-summary-label">Route</span>
+              <span class="config-summary-val" id="cfg-sum-route">—</span>
+            </div>
+            <div class="config-summary-row">
+              <span class="config-summary-label">Mode</span>
+              <span class="config-summary-val" id="cfg-sum-mode">—</span>
+            </div>
+            <div class="config-summary-row">
+              <span class="config-summary-label" id="cfg-sum-target-label">Model</span>
+              <span class="config-summary-val" id="cfg-sum-target">—</span>
+            </div>
+            <div class="config-summary-row">
+              <span class="config-summary-label">GW Token</span>
+              <span class="config-summary-val" id="cfg-sum-token">—</span>
+            </div>
           </div>
         </div>
 
@@ -2566,7 +2579,7 @@
 </div>
 
 <script src="/js/i18n.js?v=8"></script>
-<script src="/js/app.js?v=9"></script>
+<script src="/js/app.js?v=10"></script>
 
 <!-- API Token Modal -->
 <div id="aip-token-modal" style="display:none;position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,0.7);backdrop-filter:blur(4px);align-items:center;justify-content:center;">

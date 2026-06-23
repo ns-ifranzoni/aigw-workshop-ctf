@@ -956,11 +956,37 @@ function openPanel(type) {
   });
   panel.classList.add('open');
   if (type === 'instructions') renderLabInstructions();
+  if (type === 'config') loadConfigSyncBanner();
+}
+
+let configSyncCountdownTimer = null;
+
+async function loadConfigSyncBanner() {
+  const banner = document.getElementById('config-sync-banner');
+  const valueEl = document.getElementById('config-sync-value');
+  if (!banner || !valueEl) return;
+  if (configSyncCountdownTimer) { clearInterval(configSyncCountdownTimer); configSyncCountdownTimer = null; }
+  try {
+    const res = await apiFetch('/api/settings/ai-gateway-sync');
+    if (!res.ok) throw new Error();
+    const d = await res.json();
+    const nextSyncAt = getAiGatewayNextSyncAt(d.last_sync_time);
+    if (!nextSyncAt) { banner.style.display = 'none'; return; }
+    valueEl.dataset.nextSyncAt = nextSyncAt;
+    valueEl.textContent = formatAiGatewaySyncCountdown(nextSyncAt);
+    banner.style.display = 'flex';
+    configSyncCountdownTimer = setInterval(() => {
+      valueEl.textContent = formatAiGatewaySyncCountdown(Number(valueEl.dataset.nextSyncAt));
+    }, 1000);
+  } catch {
+    banner.style.display = 'none';
+  }
 }
 
 function closePanel() {
   document.getElementById('config-panel')?.classList.remove('open');
   document.getElementById('instructions-panel')?.classList.remove('open');
+  if (configSyncCountdownTimer) { clearInterval(configSyncCountdownTimer); configSyncCountdownTimer = null; }
 }
 
 function setMode(mode) {
