@@ -26,7 +26,7 @@ sequenceDiagram
 
         note over BE,GW: Request proxied through Netskope AI Gateway
 
-        BE->>GW: POST {gatewayUrl}/v1/{provider}/v1/chat/completions<br/>x-ns-aig-apikey: {participant_api_key}
+        BE->>GW: POST {gatewayUrl}/v1/{provider}/v1/chat/completions<br/>x-ns-aig-apikey: {participant_api_key}<br/>Authorization: Bearer {provider_api_token}
         GW->>GW: Apply policies<br/>(DLP · guardrails · access control · logging)
 
         alt Budget / policy blocks request
@@ -49,7 +49,7 @@ sequenceDiagram
 | | Direct | Secured |
 |---|---|---|
 | **Ruta** | Student → Backend → LLM | Student → Backend → AI Gateway → LLM |
-| **Auth al LLM** | API key del proveedor (en DB) | `x-ns-aig-apikey` del participante |
+| **Auth al LLM** | `Authorization: Bearer {provider_api_token}` | `x-ns-aig-apikey` del participante + `Authorization: Bearer {provider_api_token}` |
 | **Políticas DLP** | ✗ No aplican | ✓ Evaluadas en el gateway |
 | **Guardrails** | ✗ No aplican | ✓ Evaluados en el gateway |
 | **Activity logging** | Solo en DB local | En gateway + DB local |
