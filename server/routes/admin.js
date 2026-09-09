@@ -3,11 +3,13 @@ const path = require('path');
 const bcrypt = require('bcrypt');
 const { v4: uuidv4 } = require('uuid');
 const db = require('../db');
-const { requireAdmin } = require('../middleware/auth');
+const { requireAdmin, requireAuth } = require('../middleware/auth');
 const ns = require('../netskope');
 const PARTICIPANT_NAMES = require('../participant-names');
 const { PARTICIPANT_ICONS } = require('../constants');
 const logger = require('../logger');
+const { readLocalMcpServers, publicMcpServers } = require('../mcp');
+const { findParticipantTokenRow } = require('../participant-tokens');
 
 const router = express.Router();
 
@@ -49,15 +51,6 @@ async function deleteNetskopeTokenAndGroup(tenant, apiToken, tokenRow) {
       catch (e2) { console.error('deleteTokenGroup failed:', e2.message); }
     }
   }
-}
-
-// Find the api_keys row for a participant, whether it's linked by the token
-// value (access_codes.api_key === api_keys.key) or by assignment (assigned_to).
-function findParticipantTokenRow(code, apiKeyVal) {
-  const v = apiKeyVal || '';
-  return db.prepare(
-    "SELECT * FROM api_keys WHERE assigned_to = ? OR (? != '' AND key = ?) LIMIT 1"
-  ).get(code, v, v);
 }
 
 function parseCSVLine(line) {
@@ -1596,6 +1589,21 @@ router.get('/settings/test-template-urls', requireAdmin, async (req, res) => {
   res.json(results);
 });
 
+// Certificate-verification failures reported by Node/OpenSSL. Reaching one of
+// these means the TLS handshake got as far as receiving the gateway's
+// certificate — so the host answered, it just cannot be trusted. Anything else
+// (ECONNREFUSED, ENOTFOUND, EPROTO…) proves nothing about reachability.
+const TLS_CERT_ERROR_CODES = new Set([
+  'DEPTH_ZERO_SELF_SIGNED_CERT', 'SELF_SIGNED_CERT_IN_CHAIN', 'CERT_HAS_EXPIRED',
+  'CERT_NOT_YET_VALID', 'ERR_TLS_CERT_ALTNAME_INVALID', 'UNABLE_TO_VERIFY_LEAF_SIGNATURE',
+  'UNABLE_TO_GET_ISSUER_CERT', 'UNABLE_TO_GET_ISSUER_CERT_LOCALLY',
+  'CERT_UNTRUSTED', 'CERT_SIGNATURE_FAILURE', 'CERT_CHAIN_TOO_LONG', 'HOSTNAME_MISMATCH',
+]);
+
+function isTlsCertError(code) {
+  return !!code && (TLS_CERT_ERROR_CODES.has(code) || /CERT/.test(code));
+}
+
 router.get('/settings/test-gateway', requireAdmin, async (req, res) => {
   const url = db.prepare("SELECT value FROM settings WHERE key = 'gateway_url'").get()?.value;
   if (!url) return res.status(400).json({ ok: false, error: 'No gateway URL configured' });
@@ -1607,8 +1615,21 @@ router.get('/settings/test-gateway', requireAdmin, async (req, res) => {
     clearTimeout(timeout);
     res.json({ ok: true, status: r.status, statusText: r.statusText });
   } catch (e) {
-    const msg = e.name === 'AbortError' ? 'Timed out after 5s' : e.message;
-    res.json({ ok: false, error: msg });
+    if (e.name === 'AbortError') return res.json({ ok: false, error: 'Timed out after 5s' });
+    // TLS verification is deliberately left enabled: report the situation
+    // precisely instead of trusting an unverified certificate.
+    if (isTlsCertError(e.code)) {
+      const reason = (e.message.split('reason: ')[1] || e.message).trim();
+      return res.json({ ok: false, reachable: true, tls_valid: false, code: e.code, error: reason });
+    }
+    // TLS could not be negotiated at all — typically https:// against a port
+    // serving plain HTTP. No certificate was received, so unlike the case above
+    // this says nothing about whether a gateway is listening. The raw OpenSSL
+    // error is unreadable, so translate it.
+    if (e.code === 'EPROTO' || /SSL/.test(e.code || '')) {
+      return res.json({ ok: false, code: e.code, error: 'TLS handshake failed — is the gateway serving HTTPS on that port?' });
+    }
+    res.json({ ok: false, error: e.message });
   }
 });
 
@@ -1681,12 +1702,28 @@ router.post('/aiproviders/retrieve', requireAdmin, async (req, res) => {
         port=excluded.port, protocol=excluded.protocol, type=excluded.type,
         models=excluded.models, api_token=NULL
     `);
+    const upstreamIds = new Set();
     for (const p of (data.elements || [])) {
       const models = modelsByProvider[p.id] || null;
       upsert.run(p.id, p.name, p.schema, p.host, p.port, p.protocol, p.type, models ? JSON.stringify(models) : null);
+      upstreamIds.add(String(p.id));
     }
+
+    // Drop providers the tenant no longer offers. The sync only ever upserted,
+    // so predefined providers retired by Netskope lingered forever and stayed
+    // selectable in the participant UI. Manually created providers are ours,
+    // not the tenant's, so they are never touched.
+    let removed = [];
+    if (upstreamIds.size > 0) {
+      const local = db.prepare("SELECT id, ns_id, name FROM ai_providers WHERE ns_id NOT LIKE 'manual-%'").all();
+      const stale = local.filter(r => !upstreamIds.has(String(r.ns_id)));
+      const del = db.prepare('DELETE FROM ai_providers WHERE id = ?');
+      for (const r of stale) { del.run(r.id); removed.push(r.name); }
+      if (removed.length) logger.info({ removed }, 'AI providers no longer present in the tenant were removed');
+    }
+
     const rows = db.prepare('SELECT * FROM ai_providers ORDER BY id ASC').all();
-    res.json({ ok: true, providers: rows });
+    res.json({ ok: true, providers: rows, removed });
   } catch (e) {
     res.status(502).json({ error: e.message });
   }
@@ -1734,9 +1771,67 @@ router.put('/aiproviders/:id', requireAdmin, (req, res) => {
   res.json({ ok: true });
 });
 
+// Bedrock is the odd one out: it authenticates with SigV4 and its credentials
+// live in the settings table (access key / secret / region), not in
+// ai_providers.api_token. Shared by the AI Providers test and the provider-token
+// panel so both report the same thing. Hits the control plane
+// (bedrock.<region>) to list foundation models — no inference, no cost.
+async function checkBedrockCredentials() {
+  const get = key => db.prepare('SELECT value FROM settings WHERE key = ?').get(key)?.value || '';
+  const accessKey = get('provider_token_bedrock_key');
+  const secretKey = get('provider_token_bedrock_secret');
+  const region = get('provider_token_bedrock_region') || 'us-east-1';
+  const host = `bedrock.${region}.amazonaws.com`;
+  const reqPath = '/foundation-models';
+  const url = `https://${host}${reqPath}`;
+
+  if (!accessKey || !secretKey) {
+    return { ok: false, configured: false, url, error: 'Bedrock credentials not configured — set the access key and secret in Settings.' };
+  }
+
+  const { createHmac, createHash } = require('crypto');
+  const amzDate = new Date().toISOString().replace(/[:-]|\.\d{3}/g, '').slice(0, 15) + 'Z';
+  const dateStamp = amzDate.slice(0, 8);
+  const canonicalHeaders = `host:${host}\nx-amz-date:${amzDate}\n`;
+  const signedHeaders = 'host;x-amz-date';
+  const payloadHash = createHash('sha256').update('').digest('hex');
+  const canonicalRequest = `GET\n${reqPath}\n\n${canonicalHeaders}\n${signedHeaders}\n${payloadHash}`;
+  const credScope = `${dateStamp}/${region}/bedrock/aws4_request`;
+  const strToSign = `AWS4-HMAC-SHA256\n${amzDate}\n${credScope}\n${createHash('sha256').update(canonicalRequest).digest('hex')}`;
+  const hmac = (key, data) => createHmac('sha256', key).update(data).digest();
+  const signingKey = hmac(hmac(hmac(hmac(`AWS4${secretKey}`, dateStamp), region), 'bedrock'), 'aws4_request');
+  const signature = createHmac('sha256', signingKey).update(strToSign).digest('hex');
+  const auth = `AWS4-HMAC-SHA256 Credential=${accessKey}/${credScope}, SignedHeaders=${signedHeaders}, Signature=${signature}`;
+
+  const fetch = (await import('node-fetch')).default;
+  const r = await fetch(url, { headers: { 'x-amz-date': amzDate, Authorization: auth } });
+  if (r.ok) {
+    const d = await r.json();
+    const models = d.modelSummaries || [];
+    return { ok: true, configured: true, url, status: r.status, models,
+             message: `Connected — ${models.length} foundation models available` };
+  }
+  const body = await r.text();
+  return { ok: false, configured: true, url, status: r.status, error: `HTTP ${r.status}: ${body.slice(0, 120)}` };
+}
+
 router.post('/aiproviders/:id/test', requireAdmin, async (req, res) => {
   const row = db.prepare('SELECT * FROM ai_providers WHERE id = ?').get(req.params.id);
   if (!row) return res.status(404).json({ error: 'Provider not found' });
+
+  // Delegate Bedrock before the bearer-token guard below, which would otherwise
+  // reject it with a misleading "No API token configured".
+  if ((row.schema || '').toLowerCase() === 'bedrock') {
+    try {
+      const r = await checkBedrockCredentials();
+      return res.json(r.ok
+        ? { ok: true, status: r.status, reply: r.message, url: r.url }
+        : { ok: false, status: r.status, error: r.error, url: r.url });
+    } catch (e) {
+      return res.json({ ok: false, error: e.message });
+    }
+  }
+
   const token = req.body.api_token || row.api_token;
   if (!token) return res.status(400).json({ error: 'No API token configured' });
   const rawSchema = (row.schema || 'https').toLowerCase();
@@ -1745,15 +1840,30 @@ router.post('/aiproviders/:id/test', requireAdmin, async (req, res) => {
   const port = row.port ? `:${row.port}` : '';
   const baseUrl = `${schema}://${host}${port}`;
 
-  // Allow self-signed certs (common in lab/gateway environments)
-  const https = require('https');
-  const agent = schema === 'https' ? new https.Agent({ rejectUnauthorized: false }) : undefined;
+  // TLS verification stays on. A previous version built an https.Agent with
+  // rejectUnauthorized:false here and never applied it (global fetch takes a
+  // `dispatcher`, not an `agent`), so the promised leniency never existed —
+  // removed rather than left as a comment that lies. A certificate problem is
+  // reported as such, like in the gateway test.
 
-  // Try /v1/chat/completions first, fall back to /v1/models for connectivity check
-  const tryUrls = [
-    { url: `${baseUrl}/v1/chat/completions`, method: 'POST', body: JSON.stringify({ model: 'gpt-4o-mini', messages: [{ role: 'user', content: 'Say ok' }], max_tokens: 5 }) },
-    { url: `${baseUrl}/v1/models`, method: 'GET', body: undefined }
-  ];
+  // Model to exercise: only what the admin explicitly enabled for this provider.
+  // Never a hardcoded literal — a model name from another vendor's catalogue
+  // makes a perfectly valid API key look broken (every non-OpenAI provider
+  // answers "model not found").
+  let configuredModel = null;
+  try { configuredModel = JSON.parse(row.models || '[]')[0] || null; } catch {}
+
+  // GET /models proves connectivity and credentials without naming a model, so
+  // it is always attempted. The completion is added only when we know a model
+  // this provider actually accepts.
+  const tryUrls = [];
+  if (configuredModel) {
+    tryUrls.push({
+      url: `${baseUrl}/v1/chat/completions`, method: 'POST',
+      body: JSON.stringify({ model: configuredModel, messages: [{ role: 'user', content: 'Say ok' }], max_tokens: 5 }),
+    });
+  }
+  tryUrls.push({ url: `${baseUrl}/v1/models`, method: 'GET', body: undefined });
 
   for (const attempt of tryUrls) {
     try {
@@ -1761,7 +1871,6 @@ router.post('/aiproviders/:id/test', requireAdmin, async (req, res) => {
         method: attempt.method,
         headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
         body: attempt.body,
-        ...(agent ? { dispatcher: undefined } : {}),
         signal: AbortSignal.timeout(10000)
       });
       const text = await testRes.text();
@@ -1773,12 +1882,21 @@ router.post('/aiproviders/:id/test', requireAdmin, async (req, res) => {
           || JSON.stringify(data).slice(0, 200);
         return res.json({ ok: true, status: testRes.status, reply, url: attempt.url });
       }
-      // 4xx from the server = connection works, auth/model issue
-      if (testRes.status >= 400 && testRes.status < 500) {
+      // 4xx = the host answered, but auth or the model was rejected. Only report
+      // it once the cascade is exhausted: a completion refused for the model
+      // alone must not mask the credential check that follows.
+      if (testRes.status >= 400 && testRes.status < 500 && attempt === tryUrls[tryUrls.length - 1]) {
         return res.json({ ok: false, status: testRes.status, error: data?.error?.message || text.slice(0, 300), url: attempt.url });
       }
     } catch (e) {
       if (attempt === tryUrls[tryUrls.length - 1]) {
+        // Global fetch (undici) nests the system error under `cause`, node-fetch
+        // exposes it directly — check both so the same codes are recognised.
+        const code = e.code || e.cause?.code;
+        if (isTlsCertError(code)) {
+          return res.json({ ok: false, reachable: true, tls_valid: false, code,
+            error: `Reachable, but its TLS certificate is not valid (${e.cause?.message || e.message})`, url: attempt.url });
+        }
         return res.json({ ok: false, error: `${e.message} — URL tried: ${attempt.url}` });
       }
     }
@@ -1850,7 +1968,9 @@ router.put('/settings/models', requireAdmin, (req, res) => {
 });
 
 // Public endpoint — used by the user config panel to know which models to show
-router.get('/settings/models/public', (req, res) => {
+// Participant-facing, but still behind a session: it lists the provider names
+// and the models enabled in the lab.
+router.get('/settings/models/public', requireAuth, (req, res) => {
   const row = db.prepare("SELECT value FROM settings WHERE key = 'enabled_models'").get();
   const visibleProviders = db.prepare('SELECT name, schema, models FROM ai_providers WHERE visible = 1 ORDER BY id ASC').all();
   res.json({ enabled_models: row ? JSON.parse(row.value) : null, visible_providers: visibleProviders });
@@ -1906,43 +2026,9 @@ router.get('/settings/provider-tokens/test/:provider', requireAdmin, async (req,
       return res.status(502).json({ error: err.error?.message || `HTTP ${r.status}` });
 
     } else if (provider === 'bedrock') {
-      const accessKey = get('provider_token_bedrock_key');
-      const secretKey = get('provider_token_bedrock_secret');
-      const region = get('provider_token_bedrock_region') || 'us-east-1';
-      if (!accessKey || !secretKey) return res.status(400).json({ error: 'Bedrock credentials not configured' });
-
-      // Simple AWS SigV4 request to list foundation models
-      const { createHmac, createHash } = require('crypto');
-      const host = `bedrock.${region}.amazonaws.com`;
-      const path = '/foundation-models';
-      const now = new Date();
-      const amzDate = now.toISOString().replace(/[:-]|\.\d{3}/g, '').slice(0, 15) + 'Z';
-      const dateStamp = amzDate.slice(0, 8);
-
-      const canonicalHeaders = `host:${host}\nx-amz-date:${amzDate}\n`;
-      const signedHeaders = 'host;x-amz-date';
-      const payloadHash = createHash('sha256').update('').digest('hex');
-      const canonicalRequest = `GET\n${path}\n\n${canonicalHeaders}\n${signedHeaders}\n${payloadHash}`;
-
-      const credScope = `${dateStamp}/${region}/bedrock/aws4_request`;
-      const strToSign = `AWS4-HMAC-SHA256\n${amzDate}\n${credScope}\n${createHash('sha256').update(canonicalRequest).digest('hex')}`;
-
-      const hmac = (key, data) => createHmac('sha256', key).update(data).digest();
-      const signingKey = hmac(hmac(hmac(hmac(`AWS4${secretKey}`, dateStamp), region), 'bedrock'), 'aws4_request');
-      const signature = createHmac('sha256', signingKey).update(strToSign).digest('hex');
-
-      const auth = `AWS4-HMAC-SHA256 Credential=${accessKey}/${credScope}, SignedHeaders=${signedHeaders}, Signature=${signature}`;
-
-      const fetch = (await import('node-fetch')).default;
-      const r = await fetch(`https://${host}${path}`, {
-        headers: { 'x-amz-date': amzDate, Authorization: auth }
-      });
-      if (r.ok) {
-        const d = await r.json();
-        return res.json({ ok: true, message: `Connected — ${d.modelSummaries?.length || 0} foundation models available` });
-      }
-      const body = await r.text();
-      return res.status(502).json({ error: `HTTP ${r.status}: ${body.slice(0, 120)}` });
+      const r = await checkBedrockCredentials();
+      if (r.ok) return res.json({ ok: true, message: r.message });
+      return res.status(r.configured ? 502 : 400).json({ error: r.error });
 
     } else {
       return res.status(400).json({ error: 'Unknown provider' });
@@ -2190,11 +2276,13 @@ router.post('/settings/factory-reset', requireAdmin, async (req, res) => {
     const defaultAdmin = db.prepare("SELECT id FROM access_codes WHERE code = ? AND role = 'admin'").get('ADMIN-2026');
     if (!defaultAdmin) {
       db.prepare("INSERT INTO access_codes (code, api_key, label, role, username, password_hash) VALUES (?, ?, ?, ?, ?, NULL)")
-        .run('ADMIN-2026', 'admin-key', 'Administrator', 'admin', 'ADMIN-2026');
+        .run('ADMIN-2026', require('crypto').randomBytes(24).toString('hex'), 'Administrator', 'admin', 'ADMIN-2026');
     } else {
       // True factory state: clear the admin password so the next login prompts
-      // to set a new one (same as a fresh install). No known credential remains.
-      db.prepare("UPDATE access_codes SET password_hash = NULL, username = 'ADMIN-2026' WHERE id = ?").run(defaultAdmin.id);
+      // to set a new one (same as a fresh install), and rotate the API token so
+      // no previously issued credential survives the reset.
+      db.prepare("UPDATE access_codes SET password_hash = NULL, username = 'ADMIN-2026', api_key = ? WHERE id = ?")
+        .run(require('crypto').randomBytes(24).toString('hex'), defaultAdmin.id);
     }
 
     addFactoryResetStep(
@@ -2233,25 +2321,8 @@ async function fetchNetscopeMcpServers() {
   });
 }
 
-// Read the locally-cached MCP list (synced from the tenant via
-// POST /mcp-servers/retrieve), merged with the local visibility flags. The
-// ns_id (Netskope UUID) is exposed as `id` so the existing visibility toggles,
-// keyed on that UUID, keep working unchanged.
-function readLocalMcpServers() {
-  const visRows = db.prepare('SELECT mcp_id, visible FROM mcp_visibility').all();
-  const visMap = Object.fromEntries(visRows.map(r => [String(r.mcp_id), Number(r.visible)]));
-  return db.prepare('SELECT * FROM mcp_servers ORDER BY name ASC').all().map(s => ({
-    id: s.ns_id,
-    name: s.name,
-    schema: s.schema,
-    host: s.host,
-    port: s.port,
-    path: s.path,
-    protocol: s.protocol,
-    type: s.type,
-    visible: visMap[String(s.ns_id)] !== undefined ? visMap[String(s.ns_id)] : 0,
-  }));
-}
+// readLocalMcpServers / publicMcpServers live in server/mcp.js because the chat
+// proxy needs the same list as an allowlist (see routes/chat.js).
 
 // Local read only — never calls the tenant. The dashboard polls this on every
 // load, so it must stay fast and resilient even when Netskope is unreachable.
@@ -2301,15 +2372,10 @@ router.post('/mcp-servers/:id/visibility', requireAdmin, (req, res) => {
 });
 
 // Public (participant) list — visible servers only, from the local cache.
-router.get('/mcp-servers/public', (req, res) => {
-  const servers = readLocalMcpServers()
-    .filter(s => s.visible === 1)
-    .map(s => ({
-      id: s.id,
-      name: s.name,
-      url: `${s.protocol?.replace('-system','') || 'https'}://${s.host}:${s.port}${s.path || ''}`
-    }));
-  res.json(servers);
+// Participant-facing, but still behind a session: these URLs are internal
+// MCP endpoints of the lab.
+router.get('/mcp-servers/public', requireAuth, (req, res) => {
+  res.json(publicMcpServers());
 });
 
 router.post('/settings/clear-database', requireAdmin, (req, res) => {

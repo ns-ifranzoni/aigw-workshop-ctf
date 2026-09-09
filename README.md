@@ -27,6 +27,10 @@ The default admin username is **`ADMIN-2026`**. It ships **without a password**:
 the first time you sign in with it, the portal asks you to set one. There is no
 default admin password to change or leak.
 
+The admin **API token** (used for `/api-docs` and the admin API) is likewise
+generated per install, not shipped with the code. Read or rotate it in
+**Admin → Admins → View / copy API token**.
+
 On first login the **setup wizard** walks you through the Netskope tenant,
 AI Gateway URL and API token. You can skip it and configure later from
 **Admin → Settings**.

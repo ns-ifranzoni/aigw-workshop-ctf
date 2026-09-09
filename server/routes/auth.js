@@ -6,11 +6,40 @@ const ns = require('../netskope');
 const { JWT_SECRET, SESSION_VERSION } = require('../middleware/auth');
 const { PARTICIPANT_ICONS } = require('../constants');
 
+const { limitFailures } = require('../rate-limit');
+
 const router = express.Router();
+
+// Throttle only failed attempts, keyed on the account being targeted — see
+// server/rate-limit.js for why a plain per-IP limit would break a workshop
+// where every participant shares one public IP.
+const loginLimiter = limitFailures({
+  scope: 'login',
+  windowMs: 15 * 60 * 1000,
+  max: 10,        // failures against one username from one IP
+  ipMax: 100,     // failures from one IP across all usernames (spraying)
+  key: req => `${req.ip}:${String(req.body?.username || '').trim().toLowerCase()}`,
+});
+
+// Registration is gated by a shared code, so the thing worth throttling is
+// guessing that code. Successful registrations are never counted.
+const registerLimiter = limitFailures({
+  scope: 'register',
+  windowMs: 15 * 60 * 1000,
+  max: 15,
+  key: req => `${req.ip}`,
+});
+
+const adminSetupLimiter = limitFailures({
+  scope: 'admin-setup',
+  windowMs: 15 * 60 * 1000,
+  max: 10,
+  key: req => `${req.ip}`,
+});
 
 // ── Login ─────────────────────────────────────────────────────────────────────
 // All users: { username, password }
-router.post('/login', async (req, res) => {
+router.post('/login', loginLimiter, async (req, res) => {
   const { username, password } = req.body;
 
   if (!username) return res.status(400).json({ error: 'Username and password required' });
@@ -58,7 +87,7 @@ router.post('/login', async (req, res) => {
 });
 
 // ── Register ──────────────────────────────────────────────────────────────────
-router.post('/register', async (req, res) => {
+router.post('/register', registerLimiter, async (req, res) => {
   const { username, password, registration_code } = req.body;
 
   if (!username || !password || !registration_code) {
@@ -164,7 +193,7 @@ router.post('/register', async (req, res) => {
 // ── Admin first-login password setup ────────────────────────────────────────
 // Sets the password for an admin account that has none yet (fresh install).
 // Can only be used while the account has no password — once set, it 409s.
-router.post('/admin-setup', async (req, res) => {
+router.post('/admin-setup', adminSetupLimiter, async (req, res) => {
   const { username, password } = req.body;
   if (!username || !password) return res.status(400).json({ error: 'Username and password required' });
   if (password.length < 8) return res.status(400).json({ error: 'Password must be at least 8 characters' });

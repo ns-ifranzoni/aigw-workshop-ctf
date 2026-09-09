@@ -7,11 +7,16 @@ function requireAuth(req, res, next) {
   const token = req.headers.authorization?.split(' ')[1];
   if (!token) return res.status(401).json({ error: 'Unauthorized' });
 
-  // Try API token first (admin api_key)
-  const apiKeyRow = db.prepare('SELECT code, api_key, role FROM access_codes WHERE api_key = ? AND role = ?').get(token, 'admin');
-  if (apiKeyRow) {
-    req.user = { code: apiKeyRow.code, role: apiKeyRow.role, api_key: apiKeyRow.api_key };
-    return next();
+  // Try API token first (admin api_key). Admin tokens are 48 hex chars
+  // (randomBytes(24)); the length floor keeps a short, empty or placeholder
+  // api_key from ever authenticating, whatever put it in the table.
+  const MIN_API_TOKEN_LENGTH = 32;
+  if (token.length >= MIN_API_TOKEN_LENGTH) {
+    const apiKeyRow = db.prepare('SELECT code, api_key, role FROM access_codes WHERE api_key = ? AND role = ?').get(token, 'admin');
+    if (apiKeyRow) {
+      req.user = { code: apiKeyRow.code, role: apiKeyRow.role, api_key: apiKeyRow.api_key };
+      return next();
+    }
   }
 
   // Fall back to JWT

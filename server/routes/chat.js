@@ -3,6 +3,7 @@ const db = require('../db');
 const { requireAuth } = require('../middleware/auth');
 const { v4: uuidv4 } = require('uuid');
 const { getSetting } = require('../settings-cache');
+const { publicMcpUrls } = require('../mcp');
 
 const router = express.Router();
 
@@ -83,8 +84,16 @@ router.get('/conversations/:id/messages', requireAuth, (req, res) => {
 
 // Delete a conversation
 router.delete('/conversations/:id', requireAuth, (req, res) => {
+  // Check ownership before touching anything: the message delete cannot be
+  // scoped by access_code on its own, so without this a participant holding
+  // someone else's conversation id could wipe that conversation's history
+  // (the conversation row survived, so the owner was left with an empty chat).
+  const conv = db.prepare('SELECT id FROM conversations WHERE id = ? AND access_code = ?')
+    .get(req.params.id, req.user.code);
+  if (!conv) return res.status(404).json({ error: 'Not found' });
+
   db.prepare('DELETE FROM messages WHERE conversation_id = ?').run(req.params.id);
-  db.prepare('DELETE FROM conversations WHERE id = ? AND access_code = ?').run(req.params.id, req.user.code);
+  db.prepare('DELETE FROM conversations WHERE id = ?').run(req.params.id);
   res.json({ ok: true });
 });
 
@@ -99,17 +108,6 @@ router.post('/conversations/:id/send', requireAuth, async (req, res) => {
     'SELECT * FROM conversations WHERE id = ? AND access_code = ?'
   ).get(req.params.id, req.user.code);
   if (!conv) return res.status(404).json({ error: 'Conversation not found' });
-
-  // Check prompt limit (skip for admins)
-  if (req.user.role !== 'admin') {
-    const maxRow = db.prepare("SELECT value FROM settings WHERE key = 'max_prompts'").get();
-    const maxPrompts = parseInt(maxRow?.value || '100', 10);
-    const codeRow = db.prepare('SELECT prompt_count FROM access_codes WHERE code = ?').get(req.user.code);
-    const used = codeRow?.prompt_count || 0;
-    if (used >= maxPrompts) {
-      return res.status(429).json({ error: 'prompt_limit_exceeded', used, max: maxPrompts });
-    }
-  }
 
   // Save user message
   db.prepare('INSERT INTO messages (conversation_id, role, content) VALUES (?, ?, ?)')
@@ -133,12 +131,37 @@ router.post('/conversations/:id/send', requireAuth, async (req, res) => {
     return res.status(403).json({ error: `${selectedProvider} is disabled by the admin` });
   }
 
+  // The participant's dropdown is built from /api/admin/mcp-servers/public, so a
+  // legitimate value is always one of those URLs. Anything else would make the
+  // server fetch an arbitrary host on the participant's behalf. Validated here,
+  // with the rest of the input, so nothing is reserved for a request we reject.
+  const clientMcpUrl = mode === 'mcp' && typeof mcp_server === 'string' ? mcp_server.trim() : '';
+  if (clientMcpUrl && !publicMcpUrls().has(clientMcpUrl)) {
+    return res.status(400).json({ error: 'mcp_server_not_allowed' });
+  }
+
+  // Reserve one prompt against the quota in a single statement. Reading the
+  // count and then incrementing it leaves a window where two concurrent sends
+  // both see the last free slot and both take it; `prompt_count < max` inside
+  // the UPDATE makes the check and the claim indivisible. Refunded below if the
+  // provider call fails, so the counter still only bills answered prompts.
+  let reservedPrompt = false;
+  if (req.user.role !== 'admin') {
+    const maxPrompts = parseInt(db.prepare("SELECT value FROM settings WHERE key = 'max_prompts'").get()?.value || '100', 10);
+    const claim = db.prepare('UPDATE access_codes SET prompt_count = prompt_count + 1 WHERE code = ? AND prompt_count < ?')
+      .run(req.user.code, maxPrompts);
+    if (claim.changes === 0) {
+      const used = db.prepare('SELECT prompt_count FROM access_codes WHERE code = ?').get(req.user.code)?.prompt_count || 0;
+      return res.status(429).json({ error: 'prompt_limit_exceeded', used, max: maxPrompts });
+    }
+    reservedPrompt = true;
+  }
+
   try {
     let assistantMessage;
 
     if (mode === 'mcp') {
       // MCP mode: forward to MCP server
-      const clientMcpUrl = typeof mcp_server === 'string' ? mcp_server.trim() : '';
       const mcpUrl = clientMcpUrl || configuredGatewayUrl;
       const fetch = (await import('node-fetch')).default;
       const headers = { 'Content-Type': 'application/json' };
@@ -183,15 +206,24 @@ router.post('/conversations/:id/send', requireAuth, async (req, res) => {
 
         const modelId = model || 'anthropic.claude-3-5-sonnet-20241022-v2:0';
         const host = `bedrock-runtime.${region}.amazonaws.com`;
-        const path = `/model/${encodeURIComponent(modelId)}/invoke`;
+        // Converse instead of InvokeModel: one request/response shape for every
+        // model family. InvokeModel takes a different body per family (Nova wants
+        // content blocks + inferenceConfig, Llama wants `prompt`, Anthropic wants
+        // anthropic_version), so a single hand-rolled body could only ever work
+        // for one of them.
+        const path = `/model/${encodeURIComponent(modelId)}/converse`;
 
-        let bedrockBody;
-        if (modelId.startsWith('anthropic.')) {
-          bedrockBody = { anthropic_version: 'bedrock-2023-05-31', max_tokens: 4096, messages: history.map(m => ({ role: m.role, content: m.content })) };
-        } else {
-          bedrockBody = { messages: history.map(m => ({ role: m.role, content: m.content })), max_tokens: 4096 };
+        // Converse rejects consecutive messages with the same role. That happens
+        // in normal use: a failed send leaves the user message stored with no
+        // assistant reply, so the next attempt would carry two user turns.
+        const turns = [];
+        for (const m of history) {
+          const role = m.role === 'assistant' ? 'assistant' : 'user';
+          const last = turns[turns.length - 1];
+          if (last && last.role === role) last.content[0].text += `\n\n${m.content}`;
+          else turns.push({ role, content: [{ text: m.content }] });
         }
-        const bodyStr = JSON.stringify(bedrockBody);
+        const bodyStr = JSON.stringify({ messages: turns, inferenceConfig: { maxTokens: 4096 } });
 
         const now = new Date();
         const amzDate = now.toISOString().replace(/[:-]|\.\d{3}/g, '').slice(0, 15) + 'Z';
@@ -214,7 +246,10 @@ router.post('/conversations/:id/send', requireAuth, async (req, res) => {
         });
         const data = await response.json();
         if (!response.ok) throw new Error(data.message || `Bedrock HTTP ${response.status}`);
-        assistantMessage = data.content?.[0]?.text || data.output?.message?.content?.[0]?.text || JSON.stringify(data);
+        // Converse always answers { output: { message: { content: [{ text }] } } }.
+        assistantMessage = data.output?.message?.content?.map(c => c.text).filter(Boolean).join('\n')
+          || data.content?.[0]?.text
+          || 'No response';
 
       } else {
         // OpenAI-compatible (openai, deepseek, mistral, etc.)
@@ -266,10 +301,11 @@ router.post('/conversations/:id/send', requireAuth, async (req, res) => {
     db.prepare('INSERT INTO messages (conversation_id, role, content) VALUES (?, ?, ?)')
       .run(req.params.id, 'assistant', assistantMessage);
 
-    // Increment prompt counter
-    if (req.user.role !== 'admin') {
+    // prompt_count was already claimed by the reservation above; only the
+    // per-route breakdown is left to record.
+    if (reservedPrompt) {
       const col = route_mode === 'direct' ? 'prompt_count_direct' : 'prompt_count_secured';
-      db.prepare(`UPDATE access_codes SET prompt_count = prompt_count + 1, ${col} = ${col} + 1 WHERE code = ?`).run(req.user.code);
+      db.prepare(`UPDATE access_codes SET ${col} = ${col} + 1 WHERE code = ?`).run(req.user.code);
     }
 
     // Return updated count
@@ -277,6 +313,12 @@ router.post('/conversations/:id/send', requireAuth, async (req, res) => {
     const maxRow = db.prepare("SELECT value FROM settings WHERE key = 'max_prompts'").get();
     res.json({ message: assistantMessage, prompt_count: updatedRow?.prompt_count || 0, max_prompts: parseInt(maxRow?.value || '100', 10) });
   } catch (err) {
+    // Give the reserved prompt back: the participant got no answer, so it must
+    // not count against their quota.
+    if (reservedPrompt) {
+      db.prepare('UPDATE access_codes SET prompt_count = prompt_count - 1 WHERE code = ? AND prompt_count > 0')
+        .run(req.user.code);
+    }
     res.status(502).json({ error: err.message || 'Gateway error' });
   }
 });

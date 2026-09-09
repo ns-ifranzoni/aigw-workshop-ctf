@@ -1104,7 +1104,7 @@ async function loadMcpServerOptions() {
   const urlDisplay = document.getElementById('cfg-mcp-url-display');
   if (!mcpEl) return;
   try {
-    const res = await fetch('/api/admin/mcp-servers/public');
+    const res = await apiFetch('/api/admin/mcp-servers/public');
     const data = await res.json();
     if (!res.ok || !Array.isArray(data)) console.warn('[MCP] public endpoint issue:', data);
     const servers = Array.isArray(data) ? data : [];
@@ -1146,7 +1146,7 @@ let _visibleProviders = []; // raw list from server: [{name, schema}]
 
 async function fetchEnabledModels() {
   try {
-    const res = await fetch('/api/admin/settings/models/public');
+    const res = await apiFetch('/api/admin/settings/models/public');
     const d = await res.json();
     _enabledModels = d.enabled_models;
     _visibleProviders = d.visible_providers || [];
@@ -1373,7 +1373,7 @@ function toggleSidebar() {
 
 async function loadGatewayUrl() {
   try {
-    const res = await fetch('/api/settings/gateway-url');
+    const res = await apiFetch('/api/settings/gateway-url');
     const data = await res.json();
     globalGatewayUrl = data.gateway_url || '';
   } catch {}
@@ -1381,7 +1381,7 @@ async function loadGatewayUrl() {
 
 async function loadTenantUrl() {
   try {
-    const res = await fetch('/api/settings/tenant');
+    const res = await apiFetch('/api/settings/tenant');
     const data = await res.json();
     const display = document.getElementById('cfg-tenant-url-display');
     if (display) display.textContent = data.tenant ? `https://${data.tenant}` : '—';
@@ -4105,8 +4105,18 @@ async function testGatewayUrl() {
     const res = await apiFetch('/api/admin/settings/test-gateway');
     const d = await res.json();
     if (d.ok) {
-      msgEl.textContent = `✓ Reachable (${d.status} ${d.statusText})`;
+      // Any HTTP answer means the gateway is up. Its status code is not part of
+      // the question: an unauthenticated probe to the AI Gateway legitimately
+      // answers 401/404, and showing that code next to a green tick reads as a
+      // failure. Reachability is all this test claims.
+      msgEl.textContent = '✓ Reachable';
       msgEl.style.color = 'var(--success)';
+    } else if (d.reachable && d.tls_valid === false) {
+      // The handshake returned a certificate, so the gateway is up — it just
+      // cannot be verified. Say both things: "reachable" is the answer to this
+      // test, and the TLS problem is what the admin has to decide about.
+      msgEl.textContent = `⚠ Reachable, but its TLS certificate is not valid (${d.error})`;
+      msgEl.style.color = 'var(--warning)';
     } else {
       msgEl.textContent = `✗ ${d.error}`;
       msgEl.style.color = 'var(--danger)';

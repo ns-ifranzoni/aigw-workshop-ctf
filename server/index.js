@@ -8,7 +8,7 @@ const swaggerSpec = require('./openapi');
 const logger = require('./logger');
 
 const app = express();
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 3001;
 
 // Structured request logging (skip /api/health to avoid noise)
 app.use(pinoHttp({ logger, autoLogging: false }));
@@ -66,24 +66,23 @@ app.get('/api/settings/ai-gateway-sync', requireAuth, async (req, res) => {
   }
 });
 
-app.get('/api/settings/gateway-url', (req, res) => {
+// These describe the lab's infrastructure — gateway host, tenant hostname, the
+// provider endpoints in use. Participants need them once signed in (the chat
+// and Settings panel read them after login), but there is no reason to hand
+// them to an anonymous visitor of the login page.
+app.get('/api/settings/gateway-url', requireAuth, (req, res) => {
   const row = db.prepare("SELECT value FROM settings WHERE key = 'gateway_url'").get();
   res.json({ gateway_url: row?.value || '' });
 });
 
-app.get('/api/settings/tenant', (req, res) => {
+app.get('/api/settings/tenant', requireAuth, (req, res) => {
   const row = db.prepare("SELECT value FROM settings WHERE key = 'netskope_tenant'").get();
   res.json({ tenant: row?.value || '' });
 });
 
-app.get('/api/settings/aiproviders', (req, res) => {
+app.get('/api/settings/aiproviders', requireAuth, (req, res) => {
   const rows = db.prepare('SELECT id, name, schema, host, port FROM ai_providers WHERE visible = 1 ORDER BY id ASC').all();
   res.json(rows);
-});
-
-// Serve v2 interface
-app.get('/v2', (req, res) => {
-  res.sendFile(path.join(__dirname, '../public/v2/index.html'));
 });
 
 app.use('/api', (req, res) => {
@@ -92,11 +91,7 @@ app.use('/api', (req, res) => {
 
 // Fallback to index.html for SPA
 app.get('*', (req, res) => {
-  if (req.path.startsWith('/v2/')) {
-    res.sendFile(path.join(__dirname, '../public/v2/index.html'));
-  } else {
-    res.sendFile(path.join(__dirname, '../public/index.html'));
-  }
+  res.sendFile(path.join(__dirname, '../public/index.html'));
 });
 
 app.listen(PORT, () => {

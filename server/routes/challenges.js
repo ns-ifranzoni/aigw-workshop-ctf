@@ -2,6 +2,8 @@ const express = require('express');
 const db = require('../db');
 const { requireAdmin, requireAuth } = require('../middleware/auth');
 const { getSetting, setSetting } = require('../settings-cache');
+const ns = require('../netskope');
+const { participantTokenGroupName, participantTokenGroupId } = require('../participant-tokens');
 
 const router = express.Router();
 
@@ -46,7 +48,7 @@ router.get('/registration-status', (req, res) => {
 // getSetting / setSetting provided by settings-cache (with 5 s TTL + write invalidation)
 
 // ── Variable interpolation for text challenges ──
-function interpolateVariables(text, participantCode) {
+function interpolateVariables(text, participantCode, participantApiKey) {
   let result = text;
 
   // %gateway_url — strip protocol so only the hostname (and optional port) is returned
@@ -54,8 +56,7 @@ function interpolateVariables(text, participantCode) {
   result = result.replace(/%gateway_url/g, gatewayUrl);
 
   // %tokengroup
-  const apiKey = db.prepare('SELECT netskope_token_group_name FROM api_keys WHERE assigned_to = ?').get(participantCode);
-  const tokenGroup = apiKey?.netskope_token_group_name || '';
+  const tokenGroup = participantTokenGroupName(participantCode, participantApiKey) || '';
   result = result.replace(/%tokengroup/g, tokenGroup);
 
   return result;
@@ -601,6 +602,39 @@ router.get('/participant', requireAuth, (req, res) => {
   });
 });
 
+// ── Policy challenge verification ─────────────────────────
+// The three policy challenge types differ only in which rule endpoint they
+// query; the match criteria are identical.
+const POLICY_RULE_PATHS = {
+  policy_access: '/api/v2/policy/aig/access/rules',
+  policy_dlp: '/api/v2/policy/aig/dlp/rules',
+  policy_guardrails: '/api/v2/policy/aig/aiguardrails/rules',
+};
+
+function ruleMatchesChallenge(rule, challenge, tokenGroupId) {
+  // Must match participant's token group
+  if (tokenGroupId && !(rule.criteria?.token_group_ids || []).includes(tokenGroupId)) return false;
+  // Must match configured activity (UI value lowercased)
+  if (challenge.ch_activity) {
+    const act = challenge.ch_activity.toLowerCase();
+    if (!(rule.criteria?.activities || []).includes(act)) return false;
+  }
+  // Must match configured action (UI value lowercased)
+  if (challenge.ch_gateway_action) {
+    const action = challenge.ch_gateway_action.toLowerCase();
+    if (rule.actions?.rule_action?.action_name !== action) return false;
+  }
+  // Must match configured model in match_values (if set)
+  if (challenge.ch_model) {
+    const model = challenge.ch_model.trim();
+    const modelMatch = (rule.criteria?.ai_provider_models || []).some(m =>
+      (m.match_values || []).includes(model)
+    );
+    if (!modelMatch) return false;
+  }
+  return true;
+}
+
 // Student: check a challenge
 router.post('/participant/:id/check', requireAuth, async (req, res) => {
   const ctfState = db.prepare("SELECT value FROM settings WHERE key = 'ctf_state'").get()?.value || 'stop';
@@ -643,126 +677,29 @@ router.post('/participant/:id/check', requireAuth, async (req, res) => {
       // ── Text: keyword match ──────────────────────────────
       let keyword = (challenge.ch_text_key || '').trim();
       if (!keyword) return res.status(400).json({ error: 'Challenge has no text key configured' });
-      keyword = interpolateVariables(keyword, code);
+      keyword = interpolateVariables(keyword, code, req.user.api_key);
       const { participant_text } = req.body;
       const input = (participant_text || '').trim();
       found = input.toLowerCase().includes(keyword.toLowerCase());
 
-    } else if (challenge.challenge_type === 'policy_access') {
-      // ── Policy · Access Control: verify a matching rule exists ──
+    } else if (POLICY_RULE_PATHS[challenge.challenge_type]) {
+      // ── Policy · Access Control / DLP / Guardrails: verify a matching rule exists ──
       const tenant = db.prepare("SELECT value FROM settings WHERE key = 'netskope_tenant'").get()?.value;
       const apiToken = db.prepare("SELECT value FROM settings WHERE key = 'netskope_api_token'").get()?.value;
       if (!tenant || !apiToken) return res.status(400).json({ error: 'Netskope not configured' });
 
-      // Get the student's token group ID
-      const tokenGroupId = db.prepare('SELECT netskope_token_group_id FROM api_keys WHERE assigned_to = ?').get(code)?.netskope_token_group_id;
+      // Get the participant's token group ID
+      const tokenGroupId = participantTokenGroupId(code, req.user.api_key);
 
-      const fetch = (await import('node-fetch')).default;
       const baseUrl = `https://${tenant.replace(/^https?:\/\//, '')}`;
-
-      const rulesRes = await fetch(`${baseUrl}/api/v2/policy/aig/access/rules`, {
+      // nsFetch retries on 429 and throws on any other error response, so a
+      // rate-limited or failing tenant surfaces as a 502 instead of silently
+      // looking like an empty rule list (which would penalise the participant).
+      const rulesData = await ns.nsFetch(`${baseUrl}${POLICY_RULE_PATHS[challenge.challenge_type]}`, {
         headers: { 'Content-Type': 'application/json', 'Netskope-Api-Token': apiToken }
       });
-      const rulesData = await rulesRes.json();
-      const rules = rulesData.elements || [];
 
-      found = rules.some(rule => {
-        // Must match student's token group
-        if (tokenGroupId && !(rule.criteria?.token_group_ids || []).includes(tokenGroupId)) return false;
-        // Must match configured activity (UI value lowercased)
-        if (challenge.ch_activity) {
-          const act = challenge.ch_activity.toLowerCase();
-          if (!(rule.criteria?.activities || []).includes(act)) return false;
-        }
-        // Must match configured action (UI value lowercased)
-        if (challenge.ch_gateway_action) {
-          const action = challenge.ch_gateway_action.toLowerCase();
-          if (rule.actions?.rule_action?.action_name !== action) return false;
-        }
-        // Must match configured model in match_values (if set)
-        if (challenge.ch_model) {
-          const model = challenge.ch_model.trim();
-          const modelMatch = (rule.criteria?.ai_provider_models || []).some(m =>
-            (m.match_values || []).includes(model)
-          );
-          if (!modelMatch) return false;
-        }
-        return true;
-      });
-
-    } else if (challenge.challenge_type === 'policy_dlp') {
-      // ── Policy · DLP: verify a matching DLP rule exists ──
-      const tenant = db.prepare("SELECT value FROM settings WHERE key = 'netskope_tenant'").get()?.value;
-      const apiToken = db.prepare("SELECT value FROM settings WHERE key = 'netskope_api_token'").get()?.value;
-      if (!tenant || !apiToken) return res.status(400).json({ error: 'Netskope not configured' });
-
-      const tokenGroupId = db.prepare('SELECT netskope_token_group_id FROM api_keys WHERE assigned_to = ?').get(code)?.netskope_token_group_id;
-
-      const fetch = (await import('node-fetch')).default;
-      const baseUrl = `https://${tenant.replace(/^https?:\/\//, '')}`;
-
-      const rulesRes = await fetch(`${baseUrl}/api/v2/policy/aig/dlp/rules`, {
-        headers: { 'Content-Type': 'application/json', 'Netskope-Api-Token': apiToken }
-      });
-      const rulesData = await rulesRes.json();
-      const rules = rulesData.elements || [];
-
-      found = rules.some(rule => {
-        if (tokenGroupId && !(rule.criteria?.token_group_ids || []).includes(tokenGroupId)) return false;
-        if (challenge.ch_activity) {
-          const act = challenge.ch_activity.toLowerCase();
-          if (!(rule.criteria?.activities || []).includes(act)) return false;
-        }
-        if (challenge.ch_gateway_action) {
-          const action = challenge.ch_gateway_action.toLowerCase();
-          if (rule.actions?.rule_action?.action_name !== action) return false;
-        }
-        if (challenge.ch_model) {
-          const model = challenge.ch_model.trim();
-          const modelMatch = (rule.criteria?.ai_provider_models || []).some(m =>
-            (m.match_values || []).includes(model)
-          );
-          if (!modelMatch) return false;
-        }
-        return true;
-      });
-
-    } else if (challenge.challenge_type === 'policy_guardrails') {
-      // ── Policy · Guardrails: verify a matching guardrails rule exists ──
-      const tenant = db.prepare("SELECT value FROM settings WHERE key = 'netskope_tenant'").get()?.value;
-      const apiToken = db.prepare("SELECT value FROM settings WHERE key = 'netskope_api_token'").get()?.value;
-      if (!tenant || !apiToken) return res.status(400).json({ error: 'Netskope not configured' });
-
-      const tokenGroupId = db.prepare('SELECT netskope_token_group_id FROM api_keys WHERE assigned_to = ?').get(code)?.netskope_token_group_id;
-
-      const fetch = (await import('node-fetch')).default;
-      const baseUrl = `https://${tenant.replace(/^https?:\/\//, '')}`;
-
-      const rulesRes = await fetch(`${baseUrl}/api/v2/policy/aig/aiguardrails/rules`, {
-        headers: { 'Content-Type': 'application/json', 'Netskope-Api-Token': apiToken }
-      });
-      const rulesData = await rulesRes.json();
-      const rules = rulesData.elements || [];
-
-      found = rules.some(rule => {
-        if (tokenGroupId && !(rule.criteria?.token_group_ids || []).includes(tokenGroupId)) return false;
-        if (challenge.ch_activity) {
-          const act = challenge.ch_activity.toLowerCase();
-          if (!(rule.criteria?.activities || []).includes(act)) return false;
-        }
-        if (challenge.ch_gateway_action) {
-          const action = challenge.ch_gateway_action.toLowerCase();
-          if (rule.actions?.rule_action?.action_name !== action) return false;
-        }
-        if (challenge.ch_model) {
-          const model = challenge.ch_model.trim();
-          const modelMatch = (rule.criteria?.ai_provider_models || []).some(m =>
-            (m.match_values || []).includes(model)
-          );
-          if (!modelMatch) return false;
-        }
-        return true;
-      });
+      found = (rulesData.elements || []).some(rule => ruleMatchesChallenge(rule, challenge, tokenGroupId));
 
     } else {
       // ── Events (event_*): query the AI Gateway events API ──
@@ -770,11 +707,20 @@ router.post('/participant/:id/check', requireAuth, async (req, res) => {
       const apiToken = db.prepare("SELECT value FROM settings WHERE key = 'netskope_api_token'").get()?.value;
       if (!tenant || !apiToken) return res.status(400).json({ error: 'Netskope not configured' });
 
-      const fetch = (await import('node-fetch')).default;
+      // Use the token group name stored when the token was created. Rebuilding
+      // it from the participant code breaks the match: the code is uppercased
+      // while the group is created with the username as typed, and admins can
+      // choose a custom prefix on bulk creation.
+      const tokenGroupName = participantTokenGroupName(code, req.user.api_key);
+      if (!tokenGroupName) {
+        // Configuration problem, not a wrong answer — return before any penalty.
+        return res.status(409).json({ error: 'no_token_group' });
+      }
+
       const baseUrl = `https://${tenant.replace(/^https?:\/\//, '')}`;
       const queryParts = [];
       if (challenge.ns_query) queryParts.push(challenge.ns_query);
-      queryParts.push(`x_ai_token_group eq Participant-Group-${code}`);
+      queryParts.push(`x_ai_token_group eq ${tokenGroupName}`);
       const query = queryParts.join(' and ');
 
       const now = Math.floor(Date.now() / 1000);
@@ -782,10 +728,9 @@ router.post('/participant/:id/check', requireAuth, async (req, res) => {
       const startTime = now - (lookbackMinutes * 60);
 
       const params = new URLSearchParams({ query, start_time: startTime, end_time: now });
-      const eventsRes = await fetch(`${baseUrl}/api/v2/events/datasearch/aig?${params}`, {
+      const eventsData = await ns.nsFetch(`${baseUrl}/api/v2/events/datasearch/aig?${params}`, {
         headers: { 'accept': 'application/json', 'Authorization': `Bearer ${apiToken}` }
       });
-      const eventsData = await eventsRes.json();
       found = (eventsData.result || []).length > 0;
     }
 

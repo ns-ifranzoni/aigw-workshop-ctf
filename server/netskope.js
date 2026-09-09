@@ -146,4 +146,4 @@ async function deleteTokenGroup(tenant, apiToken, groupId) {
   return true;
 }
 
-module.exports = { getNetskopeConfig, listTokenGroups, listTokens, listAppliances, createTokenGroup, createToken, createBulkParticipantTokens, bulkNames, checkDuplicateNames, deleteToken, deleteTokenGroup };
+module.exports = { nsFetch, getNetskopeConfig, listTokenGroups, listTokens, listAppliances, createTokenGroup, createToken, createBulkParticipantTokens, bulkNames, checkDuplicateNames, deleteToken, deleteTokenGroup };

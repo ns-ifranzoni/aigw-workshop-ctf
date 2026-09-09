@@ -283,16 +283,33 @@ if (!gw) db.prepare("INSERT INTO settings (key, value) VALUES (?, ?)").run('gate
 // Default admin: created WITHOUT a password. On first login the portal
 // detects the empty password_hash and prompts to set one (see routes/auth.js
 // admin-setup). This avoids shipping a known default credential.
+// The API token is generated per install for the same reason — middleware/auth
+// accepts an admin api_key as a bearer token, so a fixed value in the public
+// repo would be a full authentication bypass. Read it in Admin → Admins.
 const admin = db.prepare("SELECT * FROM access_codes WHERE role = 'admin' LIMIT 1").get();
 if (!admin) {
   db.prepare("INSERT INTO access_codes (code, api_key, label, role, username, password_hash) VALUES (?, ?, ?, ?, ?, NULL)").run(
-    'ADMIN-2026', 'admin-key', 'Administrator', 'admin', 'ADMIN-2026'
+    'ADMIN-2026', require('crypto').randomBytes(24).toString('hex'), 'Administrator', 'admin', 'ADMIN-2026'
   );
 } else if (admin.username == null) {
   // Legacy admin without a username: backfill it from the code, but leave the
   // password as-is (null → first-login setup; existing hash → keep working).
   db.prepare("UPDATE access_codes SET username = code WHERE role = 'admin' AND username IS NULL").run();
 }
+
+// Migrate: rotate the legacy hardcoded default admin API token. Older installs
+// seeded api_key = 'admin-key', a value published in the repo that grants full
+// admin access through middleware/auth. Idempotent: only rows still holding it.
+try {
+  const legacyAdmins = db.prepare("SELECT id FROM access_codes WHERE role = 'admin' AND api_key = 'admin-key'").all();
+  const rotate = db.prepare('UPDATE access_codes SET api_key = ? WHERE id = ?');
+  for (const row of legacyAdmins) {
+    rotate.run(require('crypto').randomBytes(24).toString('hex'), row.id);
+  }
+  if (legacyAdmins.length) {
+    console.warn(`[security] Rotated ${legacyAdmins.length} admin API token(s) that still used the default value. Read the new token in Admin → Admins.`);
+  }
+} catch (e) { console.error('Migration admin api_key rotation:', e.message); }
 
 // Migrate: rename student_code → participant_code in challenge_completions
 try {

@@ -41,7 +41,7 @@ sleep 1
 nohup node server/index.js > /tmp/workshop-server.log 2>&1 &
 sleep 2
 
-if curl -s http://localhost:3000 -o /dev/null -w "%{http_code}" | grep -q "200"; then
+if curl -s http://localhost:3001 -o /dev/null -w "%{http_code}" | grep -q "200"; then
   echo "✅ Server restarted successfully."
 else
   echo "⚠️  Server may not have started — check /tmp/workshop-server.log"
