@@ -334,6 +334,7 @@ async function setupUser() {
   await fetchEnabledModels();
   updateModelList();
   loadParticipantConfig();
+  loadConfigSyncBanner();
   applyTranslations();
   await loadGatewayUrl();
   loadTenantUrl();
@@ -956,7 +957,6 @@ function openPanel(type) {
   });
   panel.classList.add('open');
   if (type === 'instructions') renderLabInstructions();
-  if (type === 'config') loadConfigSyncBanner();
 }
 
 let configSyncCountdownTimer = null;
@@ -974,7 +974,7 @@ async function loadConfigSyncBanner() {
     if (!nextSyncAt) { banner.style.display = 'none'; return; }
     valueEl.dataset.nextSyncAt = nextSyncAt;
     valueEl.textContent = formatAiGatewaySyncCountdown(nextSyncAt);
-    banner.style.display = 'flex';
+    banner.style.display = 'inline-flex';
     configSyncCountdownTimer = setInterval(() => {
       valueEl.textContent = formatAiGatewaySyncCountdown(Number(valueEl.dataset.nextSyncAt));
     }, 1000);
@@ -986,7 +986,6 @@ async function loadConfigSyncBanner() {
 function closePanel() {
   document.getElementById('config-panel')?.classList.remove('open');
   document.getElementById('instructions-panel')?.classList.remove('open');
-  if (configSyncCountdownTimer) { clearInterval(configSyncCountdownTimer); configSyncCountdownTimer = null; }
 }
 
 function setMode(mode) {
@@ -1213,9 +1212,32 @@ async function loadAdminGatewayUrl() {
   try {
     const res = await apiFetch('/api/admin/settings/gateway-url');
     const data = await res.json();
-    const input = document.getElementById('admin-gateway-url');
+    const input = document.getElementById('public-admin-gateway-url');
     if (input) input.value = data.gateway_url || '';
+    const priv = data.gateway_url_private || '';
+    const same = document.getElementById('private-gateway-same');
+    const privInput = document.getElementById('private-admin-gateway-url');
+    if (same && privInput) {
+      same.checked = !priv || priv === (data.gateway_url || '');
+      privInput.value = same.checked ? (data.gateway_url || '') : priv;
+      privInput.disabled = same.checked;
+    }
   } catch {}
+}
+
+// While "Same" is ticked the private URL mirrors the public one and is locked.
+function syncPrivateGatewayUrl(fromCheckbox) {
+  const pub = document.getElementById('public-admin-gateway-url');
+  const priv = document.getElementById('private-admin-gateway-url');
+  const same = document.getElementById('private-gateway-same');
+  if (!pub || !priv || !same) return;
+  if (same.checked) {
+    priv.value = pub.value;
+    priv.disabled = true;
+  } else {
+    priv.disabled = false;
+    if (fromCheckbox) priv.focus();
+  }
 }
 
 async function loadTemplateUrls() {
@@ -1389,11 +1411,14 @@ async function loadTenantUrl() {
 }
 
 async function saveGatewayUrl() {
-  const url = document.getElementById('admin-gateway-url').value.trim();
+  const url = document.getElementById('public-admin-gateway-url').value.trim();
   if (!url) return;
+  const same = document.getElementById('private-gateway-same').checked;
+  // Empty private URL means "same as public" on the server side.
+  const privateUrl = same ? '' : document.getElementById('private-admin-gateway-url').value.trim();
   const res = await apiFetch('/api/admin/settings/gateway-url', {
     method: 'PUT',
-    body: JSON.stringify({ gateway_url: url })
+    body: JSON.stringify({ gateway_url: url, gateway_url_private: privateUrl })
   });
   if (res.ok) {
     globalGatewayUrl = url;

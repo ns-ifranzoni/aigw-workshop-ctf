@@ -958,7 +958,9 @@ router.get('/netskope/sync-preview', requireAdmin, async (req, res) => {
 router.get('/netskope/appliances', requireAdmin, async (req, res) => {
   const { tenant, apiToken } = ns.getNetskopeConfig();
   if (!tenant || !apiToken) return res.status(400).json({ error: 'Netskope tenant and API token not configured' });
-  const gatewayUrl = db.prepare("SELECT value FROM settings WHERE key = 'gateway_url'").get()?.value || '';
+  const getSetting = key => db.prepare("SELECT value FROM settings WHERE key = ?").get(key)?.value || '';
+  // The status lookup uses the private gateway URL; empty means "same as public".
+  const gatewayUrl = getSetting('gateway_url_private') || getSetting('gateway_url');
   const configuredHost = gatewayHostFromUrl(gatewayUrl);
   if (!configuredHost) return res.status(400).json({ error: 'AI Gateway URL not configured' });
   try {
@@ -1538,13 +1540,18 @@ router.post('/settings/dismiss-wizard', requireAdmin, (req, res) => {
 
 router.get('/settings/gateway-url', requireAdmin, (req, res) => {
   const row = db.prepare("SELECT value FROM settings WHERE key = 'gateway_url'").get();
-  res.json({ gateway_url: row?.value || '' });
+  const priv = db.prepare("SELECT value FROM settings WHERE key = 'gateway_url_private'").get();
+  res.json({ gateway_url: row?.value || '', gateway_url_private: priv?.value || '' });
 });
 
 router.put('/settings/gateway-url', requireAdmin, (req, res) => {
-  const { gateway_url } = req.body;
+  const { gateway_url, gateway_url_private } = req.body;
   if (!gateway_url) return res.status(400).json({ error: 'gateway_url is required' });
   db.prepare("INSERT OR REPLACE INTO settings (key, value) VALUES ('gateway_url', ?)").run(gateway_url.trim());
+  // Only touched when sent (the setup wizard sends the public URL alone).
+  if (typeof gateway_url_private === 'string') {
+    db.prepare("INSERT OR REPLACE INTO settings (key, value) VALUES ('gateway_url_private', ?)").run(gateway_url_private.trim());
+  }
   res.json({ ok: true });
 });
 
@@ -2245,6 +2252,7 @@ router.post('/settings/factory-reset', requireAdmin, async (req, res) => {
   try {
     const settingsDefaults = [
       ['gateway_url', ''],
+      ['gateway_url_private', ''],
       ['netskope_tenant', ''],
       ['netskope_api_token', ''],
       ['max_prompts', '100'],

@@ -281,6 +281,11 @@
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l2.5 2.5"/><path d="M9 2h6"/></svg>
           <span class="ctf-timer-val">--:--</span>
         </div>
+        <div class="ctf-sync-chip" id="config-sync-banner" title="Next expected AI Gateway sync" style="display:none;">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M4 13a8 8 0 1 1 16 0"/><path d="M12 13l4-4"/><path d="M3 21h18"/></svg>
+          <span id="config-sync-label">Next sync</span>
+          <strong id="config-sync-value" data-next-sync-at="">—</strong>
+        </div>
 <div id="prompt-counter" style="display:none;align-items:center;gap:6px;font-size:12px;color:var(--text-muted);background:var(--bg-secondary);border:1px solid var(--border);border-radius:20px;padding:4px 12px;">
           <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
           <span id="prompt-counter-text">— / —</span>
@@ -444,16 +449,6 @@
           <button class="icon-btn" onclick="closePanel()">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
           </button>
-        </div>
-
-        <!-- AI Gateway next sync banner -->
-        <div class="config-section">
-          <div class="config-section-title">Netskope AI Gateway</div>
-          <div class="config-sync-banner" id="config-sync-banner" style="display:none;">
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M4 13a8 8 0 1 1 16 0"/><path d="M12 13l4-4"/><path d="M3 21h18"/></svg>
-            <span id="config-sync-label">Next expected sync</span>
-            <strong id="config-sync-value" data-next-sync-at="">—</strong>
-          </div>
         </div>
 
         <!-- Live session summary — reads first as state, then the form below -->
@@ -1671,8 +1666,17 @@
           <div class="settings-card-body">
             <div class="field-group">
               <label data-i18n="settings_gw_url_label">Gateway URL</label>
-              <input type="text" id="admin-gateway-url" placeholder="http://aigateway.lab:8080" />
-              <span class="field-hint">Shared with all participants.</span>
+              <input type="text" id="public-admin-gateway-url" placeholder="http://aigateway.lab:8080" oninput="syncPrivateGatewayUrl()" />
+              <span class="field-hint">Public URL. Shared with all participants.</span>
+            </div>
+            <div class="field-group">
+              <label>Private Gateway URL</label>
+              <input type="text" id="private-admin-gateway-url" placeholder="http://aigateway.lab:8080" disabled />
+              <label class="gateway-same-check">
+                <input type="checkbox" id="private-gateway-same" checked onchange="syncPrivateGatewayUrl(true)" />
+                <span>Same</span>
+              </label>
+              <span class="field-hint">Private URL. Used only to look up the AI Gateway Status. Untick "Same" to use a different value.</span>
             </div>
             <div class="settings-compact-actions">
               <span id="gateway-test-msg" class="settings-inline-status" style="display:none;"></span>

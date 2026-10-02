@@ -54,7 +54,9 @@ function gatewayHostFromUrl(value) {
 app.get('/api/settings/ai-gateway-sync', requireAuth, async (req, res) => {
   const { tenant, apiToken } = ns.getNetskopeConfig();
   if (!tenant || !apiToken) return res.json({ last_sync_time: null });
-  const gatewayUrl = db.prepare("SELECT value FROM settings WHERE key = 'gateway_url'").get()?.value || '';
+  const getSetting = key => db.prepare("SELECT value FROM settings WHERE key = ?").get(key)?.value || '';
+  // Appliance lookup uses the private gateway URL; empty means "same as public".
+  const gatewayUrl = getSetting('gateway_url_private') || getSetting('gateway_url');
   const configuredHost = gatewayHostFromUrl(gatewayUrl);
   if (!configuredHost) return res.json({ last_sync_time: null });
   try {

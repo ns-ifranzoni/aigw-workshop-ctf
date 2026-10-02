@@ -1947,24 +1947,17 @@ a { color: var(--accent); text-decoration: none; }
 .config-section { display: flex; flex-direction: column; gap: 4px; margin-bottom: 4px; }
 .config-section:last-child { margin-bottom: 0; }
 
+.ctf-sync-chip {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 4px 11px; border-radius: 20px;
+  font-size: 12px; line-height: 1.4; white-space: nowrap;
+  border: 1px solid var(--border); background: var(--bg-secondary); color: var(--text-secondary);
+}
+.ctf-sync-chip svg { flex-shrink: 0; opacity: 0.7; }
+.ctf-sync-chip strong { font-weight: 700; color: var(--text-primary); font-variant-numeric: tabular-nums; }
+
 /* Live session summary at the top of the Settings panel: reads as current
    state first, with the editable form below. */
-.config-sync-banner {
-  display: flex;
-  align-items: center;
-  gap: 7px;
-  background: var(--bg-tertiary);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-sm);
-  padding: 8px 12px;
-  margin-bottom: 14px;
-  font-size: 12px;
-  color: var(--text-secondary);
-}
-.config-sync-banner svg { flex-shrink: 0; opacity: 0.7; }
-.config-sync-banner span { flex: 1; }
-.config-sync-banner strong { font-size: 12px; font-weight: 700; color: var(--text-primary); white-space: nowrap; }
-
 .config-summary {
   display: flex;
   flex-direction: column;
@@ -8896,3 +8889,6 @@ th[data-sortable][aria-sort="desc"] .sort-arrow { opacity: 1; color: var(--accen
   background: color-mix(in srgb, var(--accent) 18%, transparent);
   color: color-mix(in srgb, var(--accent) 78%, #ffffff 18%);
 }
+
+.gateway-same-check { display: inline-flex; align-items: center; gap: 6px; margin-top: 6px; font-size: 12px; color: var(--text-secondary); cursor: pointer; }
+.gateway-same-check input { margin: 0; }

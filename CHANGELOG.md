@@ -1,5 +1,9 @@
 # Changelog
 
+## v1.1.9
+- **UI:** the AI Gateway "Next expected sync" countdown moved out of the participant Settings panel and now sits as a "Next sync" chip in the participant header, next to the CTF timer. It loads on sign-in instead of when Settings is opened.
+- **Feature:** Admin → AI Gateway now has a **Public** and a **Private** Gateway URL. The private URL appears below the public one and mirrors it while the **Same** checkbox is ticked (default); unticking it allows a different value. It is stored as `gateway_url_private` (empty = same as public) and used only for the AI Gateway Status lookups (`/api/admin/netskope/appliances` and the participant next-sync endpoint). The Test button checks the public URL only; chat proxying, MCP and `%gateway_url` still use the public one.
+
 ## v1.1.8
 - **Security:** the default admin API token is no longer a fixed value. It shipped as `admin-key` in the repo, and since an admin `api_key` is accepted as a bearer token, anyone could reach the whole admin API on a fresh install without a password. Now generated per install (and per factory reset), and existing installs still holding the old value are rotated automatically on startup — read the new token in **Admin → Admins → View / copy API token**.
 - **Fix:** event-based challenges (`transaction_id` / `event_*`) could never be completed. The verification query rebuilt the token group name from the participant code, which is uppercased, while the real group is created with the username as typed (`Participant-Group-nsgamer` vs `…-NSGAMER`). It now uses the token group name stored at creation time, which also fixes custom prefixes chosen during bulk creation.
