@@ -55,6 +55,10 @@ function interpolateVariables(text, participantCode, participantApiKey) {
   const gatewayUrl = (getSetting('gateway_url') || '').replace(/^https?:\/\//, '');
   result = result.replace(/%gateway_url/g, gatewayUrl);
 
+  // %gateway_private_url — same treatment for the private URL (empty = same as public)
+  const gatewayPrivateUrl = (getSetting('gateway_url_private') || getSetting('gateway_url') || '').replace(/^https?:\/\//, '');
+  result = result.replace(/%gateway_private_url/g, gatewayPrivateUrl);
+
   // %tokengroup
   const tokenGroup = participantTokenGroupName(participantCode, participantApiKey) || '';
   result = result.replace(/%tokengroup/g, tokenGroup);

@@ -1,5 +1,8 @@
 # Changelog
 
+## v1.2.0
+- **Feature:** new challenge variable `%gateway_private_url`, resolved to the private Gateway URL (`gateway_url_private`, falling back to the public one when "Same" is ticked). Like `%gateway_url`, the protocol is stripped so only host and optional port remain. Listed in the "Available variables" popover and the Text key placeholder of the challenge editor.
+
 ## v1.1.9
 - **UI:** the AI Gateway "Next expected sync" countdown moved out of the participant Settings panel and now sits as a "Next sync" chip in the participant header, next to the CTF timer. It loads on sign-in instead of when Settings is opened.
 - **Feature:** Admin → AI Gateway now has a **Public** and a **Private** Gateway URL. The private URL appears below the public one and mirrors it while the **Same** checkbox is ticked (default); unticking it allows a different value. It is stored as `gateway_url_private` (empty = same as public) and used only for the AI Gateway Status lookups (`/api/admin/netskope/appliances` and the participant next-sync endpoint). The Test button checks the public URL only; chat proxying, MCP and `%gateway_url` still use the public one.

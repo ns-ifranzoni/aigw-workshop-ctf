@@ -5820,7 +5820,7 @@ function renderChallengeRow(c, idx = 0, total = 0, editing = false) {
     <td class="challenge-value-cell">${typeCell}</td>
   </tr>
   <tr class="challenge-admin-row ch-detail-${c.id}" style="display:none;">
-    <td class="challenge-label-cell">${type === 'text' ? 'Text key <span class="info-icon-wrap"><svg class="info-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg><span class="info-popover"><strong>Available variables</strong><span><code>%tokengroup</code> Token Group assigned to the student</span><span><code>%gateway_url</code> Gateway URL configured on Netskope tenant</span></span></span>' : 'Config'}</td>
+    <td class="challenge-label-cell">${type === 'text' ? 'Text key <span class="info-icon-wrap"><svg class="info-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg><span class="info-popover"><strong>Available variables</strong><span><code>%tokengroup</code> Token Group assigned to the student</span><span><code>%gateway_url</code> Gateway URL configured on Netskope tenant</span><span><code>%gateway_private_url</code> Private Gateway URL (same as public unless changed)</span></span></span>' : 'Config'}</td>
     <td class="challenge-value-cell">${configCell}</td>
   </tr>
   <tr class="challenge-admin-row ch-detail-${c.id}" style="display:none;">
@@ -5997,8 +5997,8 @@ function toggleNewChallengeRow() {
       </td>
     </tr>
     <tr class="challenge-admin-row" id="ch-form-textkey-row" style="display:none;">
-      <td class="challenge-label-cell">Text key <span class="info-icon-wrap"><svg class="info-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg><span class="info-popover"><strong>Available variables</strong><span><code>%tokengroup</code> Token Group assigned to the student</span><span><code>%gateway_url</code> Gateway URL configured on Netskope tenant</span></span></span></td>
-      <td class="challenge-value-cell"><input class="adm-inline-input" id="new-ch-textkey" placeholder="Text the participant must send (supports %gateway_url and %tokengroup variables)" style="width:100%;"></td>
+      <td class="challenge-label-cell">Text key <span class="info-icon-wrap"><svg class="info-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg><span class="info-popover"><strong>Available variables</strong><span><code>%tokengroup</code> Token Group assigned to the student</span><span><code>%gateway_url</code> Gateway URL configured on Netskope tenant</span><span><code>%gateway_private_url</code> Private Gateway URL (same as public unless changed)</span></span></span></td>
+      <td class="challenge-value-cell"><input class="adm-inline-input" id="new-ch-textkey" placeholder="Text the participant must send (supports %gateway_url, %gateway_private_url and %tokengroup variables)" style="width:100%;"></td>
     </tr>
     <tr class="challenge-admin-row">
       <td class="challenge-label-cell" id="ch-form-score-label">Lookback / Points</td>
