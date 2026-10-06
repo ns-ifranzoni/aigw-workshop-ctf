@@ -1,5 +1,11 @@
 # Changelog
 
+## v1.2.1
+- **Feature:** the hint penalty is now configurable. **Control Center → Workshop Limits** has a new *Hint penalty (points)* field (default `5`, stored as `hint_penalty`), and each challenge can override it with its own *pts penalty* next to the hint text (blank = use the global default). Both are applied to the participant total, history, leaderboard, podium and dashboard ranking; the participant "Use hint" dialog shows the effective cost. Changing the global value also changes every challenge without an override. Failed attempts still cost 5. The CSV export/import gains a `hint_penalty` column (older CSVs still import).
+- **UI:** Workshop Limits has a **Default** button that loads the default values (100 prompts, 5 retries, 5 hint penalty); click Save to apply.
+- **UI:** the challenge Hint editor is now a larger multi-line field, with the penalty box aligned to its right.
+- **Feature:** challenge **Description** and **Hint** are rendered as Markdown (headings, bold/italic, code, lists, quotes, http(s) links) in the admin view and the participant view. The built-in renderer escapes HTML first, so it is XSS-safe and needs no external library.
+
 ## v1.2.0
 - **Feature:** new challenge variable `%gateway_private_url`, resolved to the private Gateway URL (`gateway_url_private`, falling back to the public one when "Same" is ticked). Like `%gateway_url`, the protocol is stripped so only host and optional port remain. Listed in the "Available variables" popover and the Text key placeholder of the challenge editor.
 

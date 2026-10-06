@@ -399,7 +399,7 @@
             <div class="step-number">💡</div>
             <div class="step-content">
               <h3>Hints</h3>
-              <p>Some challenges have an optional hint. Look for the <strong>Use hint</strong> button on the challenge card. Using a hint costs <strong>−5 points</strong> — the same as a wrong answer. You can only use each hint once, and the cost is applied immediately when you confirm.</p>
+              <p>Some challenges have an optional hint. Look for the <strong>Use hint</strong> button on the challenge card. Using a hint costs points (−5 by default, configurable by the admin) — the same as a wrong answer. You can only use each hint once, and the cost is applied immediately when you confirm.</p>
             </div>
           </div>
           <div class="lab-step">
@@ -1120,12 +1120,17 @@
                 <label>Retries per challenge</label>
                 <input type="number" id="admin-max-retries" min="0" value="5" />
               </div>
+              <div class="field-group">
+                <label>Hint penalty (points)</label>
+                <input type="number" id="admin-hint-penalty" min="0" value="5" />
+              </div>
             </div>
-            <span class="field-hint">Set retries to 0 for unlimited attempts.</span>
+            <span class="field-hint">Set retries to 0 for unlimited attempts. Hint penalty is the points deducted when a participant reveals a hint (default 5).</span>
             <span id="max-prompts-msg" class="settings-save-msg" style="display:none;">Saved!</span>
             <span id="max-retries-msg" class="settings-save-msg" style="display:none;">Saved!</span>
             <div class="settings-compact-actions">
               <span id="workshop-limits-msg" class="settings-inline-status"></span>
+              <button class="btn-secondary btn-icon" onclick="resetWorkshopLimitsToDefault()">Default</button>
               <button class="btn-primary btn-icon" onclick="saveWorkshopLimits()">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
                 Save
@@ -2010,7 +2015,7 @@
 
             <div class="help-subsection">
               <h3>Leaderboard</h3>
-              <p>The live ranking of <strong>all</strong> participants by total points (wrong attempts and hint usage each cost −5). <strong>Click any participant</strong> to open their challenge-detail sidebar. The header has two actions: <em>Award ceremony</em> (the fullscreen prize reveal) and <em>Expand</em> (fullscreen ranking with autorefresh).</p>
+              <p>The live ranking of <strong>all</strong> participants by total points (wrong attempts cost −5; hint usage costs the configured hint penalty, −5 by default). <strong>Click any participant</strong> to open their challenge-detail sidebar. The header has two actions: <em>Award ceremony</em> (the fullscreen prize reveal) and <em>Expand</em> (fullscreen ranking with autorefresh).</p>
             </div>
 
             <div class="help-subsection">
@@ -2130,13 +2135,13 @@
                 <div class="help-step"><span class="help-step-num">4</span><div><strong>Config</strong> (event types) — Activity (Prompt/Response, Upload, Download), Gateway Action (Allow, Block, etc.), and Transaction Type (Access, DLP, Guardrails).</div></div>
                 <div class="help-step"><span class="help-step-num">4</span><div><strong>Text key</strong> (Text type) — the exact keyword the participant must send in chat.</div></div>
                 <div class="help-step"><span class="help-step-num">5</span><div><strong>Lookback / Points</strong> — lookback window in minutes (10–60, default 30) and points awarded on completion (10–500, default 50).</div></div>
-                <div class="help-step"><span class="help-step-num">6</span><div><strong>Hint</strong> — optional text participants can reveal. Using a hint costs <strong>−5 points</strong>.</div></div>
+                <div class="help-step"><span class="help-step-num">6</span><div><strong>Hint</strong> — optional text participants can reveal. Using a hint costs points (−5 by default, configurable by the admin).</div></div>
               </div>
             </div>
 
             <div class="help-subsection">
               <h3>Scoring and penalties</h3>
-              <p>Total score = points earned − penalties. Each failed <em>Check</em> attempt deducts <strong>−5 points</strong>. Revealing a hint also deducts <strong>−5 points</strong>. Already-completed challenges are not re-checked.</p>
+              <p>Total score = points earned − penalties. Each failed <em>Check</em> attempt deducts <strong>−5 points</strong>. Revealing a hint deducts the configured <strong>hint penalty</strong> (−5 by default; set in Control Center → Workshop Limits). Already-completed challenges are not re-checked.</p>
             </div>
 
             <div class="help-subsection">
@@ -2583,7 +2588,7 @@
 </div>
 
 <script src="/js/i18n.js?v=8"></script>
-<script src="/js/app.js?v=10"></script>
+<script src="/js/app.js?v=15"></script>
 
 <!-- API Token Modal -->
 <div id="aip-token-modal" style="display:none;position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,0.7);backdrop-filter:blur(4px);align-items:center;justify-content:center;">

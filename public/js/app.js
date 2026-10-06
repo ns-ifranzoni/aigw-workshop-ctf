@@ -1447,8 +1447,8 @@ function adminTab(tab) {
   if (tab === 'conversations') { showUserList(); loadAdminConversations(); }
   if (tab === 'admins') loadAdmins();
   if (tab === 'aiproviders') loadAiProviders();
-  if (tab === 'challenges') loadChallenges();
-  if (tab === 'control') { loadControlCenter(); loadMaxPromptsSetting(); loadMaxRetriesSetting(); }
+  if (tab === 'challenges') { loadHintPenaltySetting().finally(loadChallenges); }
+  if (tab === 'control') { loadControlCenter(); loadMaxPromptsSetting(); loadMaxRetriesSetting(); loadHintPenaltySetting(); }
   if (tab === 'about') loadAboutVersion();
 }
 
@@ -3134,7 +3134,8 @@ async function saveWorkshopLimits() {
   const msg = document.getElementById('workshop-limits-msg');
   const maxPrompts = parseInt(document.getElementById('admin-max-prompts').value, 10);
   const maxRetries = parseInt(document.getElementById('admin-max-retries').value, 10);
-  if (!maxPrompts || maxPrompts < 1 || isNaN(maxRetries) || maxRetries < 0) {
+  const hintPenalty = parseInt(document.getElementById('admin-hint-penalty').value, 10);
+  if (!maxPrompts || maxPrompts < 1 || isNaN(maxRetries) || maxRetries < 0 || isNaN(hintPenalty) || hintPenalty < 0) {
     if (msg) {
       msg.textContent = 'Check the limit values';
       msg.style.color = 'var(--danger)';
@@ -3146,7 +3147,7 @@ async function saveWorkshopLimits() {
     msg.style.color = 'var(--text-muted)';
   }
   try {
-    const [promptsRes, retriesRes] = await Promise.all([
+    const [promptsRes, retriesRes, hintRes] = await Promise.all([
       apiFetch('/api/admin/settings/max-prompts', {
         method: 'PUT',
         body: JSON.stringify({ max_prompts: maxPrompts })
@@ -3154,10 +3155,16 @@ async function saveWorkshopLimits() {
       apiFetch('/api/admin/settings/max-retries', {
         method: 'PUT',
         body: JSON.stringify({ max_retries: maxRetries })
+      }),
+      apiFetch('/api/admin/settings/hint-penalty', {
+        method: 'PUT',
+        body: JSON.stringify({ hint_penalty: hintPenalty })
       })
     ]);
-    if (!promptsRes.ok || !retriesRes.ok) throw new Error('Failed to save limits');
+    if (!promptsRes.ok || !retriesRes.ok || !hintRes.ok) throw new Error('Failed to save limits');
     _maxPrompts = maxPrompts;
+    _hintPenalty = hintPenalty;
+    if (_challengesCache.length) loadChallenges();
     loadAdminCodes();
     if (msg) {
       msg.textContent = '✓ Limits saved';
@@ -3172,6 +3179,21 @@ async function saveWorkshopLimits() {
   }
 }
 
+function resetWorkshopLimitsToDefault() {
+  const defaults = { 'admin-max-prompts': 100, 'admin-max-retries': 5, 'admin-hint-penalty': 5 };
+  Object.entries(defaults).forEach(([id, v]) => { const el = document.getElementById(id); if (el) el.value = v; });
+  const msg = document.getElementById('workshop-limits-msg');
+  if (msg) { msg.textContent = 'Defaults loaded — click Save to apply'; msg.style.color = 'var(--text-muted)'; }
+}
+
+async function loadHintPenaltySetting() {
+  const res = await apiFetch('/api/admin/settings/hint-penalty');
+  const d = await res.json();
+  _hintPenalty = d.hint_penalty ?? 5;
+  const el = document.getElementById('admin-hint-penalty');
+  if (el) el.value = _hintPenalty;
+}
+
 async function loadMaxRetriesSetting() {
   const res = await apiFetch('/api/admin/settings/max-retries');
   const d = await res.json();
@@ -3180,6 +3202,7 @@ async function loadMaxRetriesSetting() {
 }
 
 let _availableApiKeys = [];
+let _hintPenalty = 5;
 
 async function loadAvailableApiKeys() {
   // Kept for token assignment display elsewhere; no longer used for participant creation
@@ -5737,8 +5760,8 @@ function renderChallengeRow(c, idx = 0, total = 0, editing = false) {
       </span>`;
 
   const descCell = editing
-    ? `<textarea class="adm-inline-input challenge-description-input" rows="2" id="ch-desc-${c.id}" placeholder="What should the participant prove?">${escHtml(c.description)}</textarea>`
-    : `<span class="challenge-read-value" id="ch-desc-${c.id}">${escHtml(c.description) || '<em style="color:var(--text-muted)">—</em>'}</span>`;
+    ? `<textarea class="adm-inline-input challenge-description-input" rows="2" id="ch-desc-${c.id}" placeholder="What should the participant prove? (Markdown supported)">${escHtml(c.description)}</textarea>`
+    : `<div class="challenge-read-value md-content" id="ch-desc-${c.id}">${renderMarkdown(c.description) || '<em style="color:var(--text-muted)">—</em>'}</div>`;
 
   const typeCell = editing
     ? `${renderTypePicker(type, v => `setChallengeEditType(${c.id},'${v}')`)}<input type="hidden" id="ch-ctype-${c.id}" value="${type}">`
@@ -5790,8 +5813,8 @@ function renderChallengeRow(c, idx = 0, total = 0, editing = false) {
     : `<span class="challenge-read-value">${c.ch_points || 50} pts</span>`;
 
   const hintCell = editing
-    ? `<input class="adm-inline-input" style="width:100%;max-width:400px;" placeholder="Optional hint text for participants" value="${escHtml(c.hint || '')}" id="ch-hint-${c.id}">`
-    : (c.hint ? `<span class="challenge-read-value" style="color:var(--text-secondary)">${escHtml(c.hint)}</span>` : `<span style="color:var(--text-muted)">—</span>`);
+    ? `<div style="display:flex;gap:12px;align-items:flex-start;width:100%;"><textarea class="adm-inline-input" rows="4" style="flex:1;min-width:0;width:100%;resize:vertical;" placeholder="Optional hint text (Markdown supported)" id="ch-hint-${c.id}">${escHtml(c.hint || '')}</textarea><div style="display:flex;gap:6px;align-items:center;margin-left:auto;flex-shrink:0;"><input class="adm-inline-input" type="number" min="0" style="width:70px;" placeholder="${_hintPenalty}" title="Hint penalty for this challenge (blank = default ${_hintPenalty})" value="${c.hint_penalty ?? ''}" id="ch-hintpen-${c.id}"><span style="color:var(--text-muted);font-size:11px;">pts penalty</span></div></div>`
+    : (c.hint ? `<div class="challenge-read-value md-content" style="color:var(--text-secondary)">${renderMarkdown(c.hint)}</div>` : `<span style="color:var(--text-muted)">—</span>`);
 
   const chevronDown = `<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>`;
   const chevronUp   = `<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="18 15 12 9 6 15"/></svg>`;
@@ -5832,7 +5855,7 @@ function renderChallengeRow(c, idx = 0, total = 0, editing = false) {
     <td class="challenge-value-cell">${pointsCell}</td>
   </tr>
   <tr class="challenge-admin-row challenge-group-end ch-detail-${c.id}" style="display:none;">
-    <td class="challenge-label-cell">Hint <span style="font-weight:400;color:var(--text-muted);font-size:11px">(-5 pts)</span></td>
+    <td class="challenge-label-cell">Hint <span style="font-weight:400;color:var(--text-muted);font-size:11px">(-${c.hint_penalty ?? _hintPenalty} pts)</span></td>
     <td class="challenge-value-cell">${hintCell}</td>
   </tr>`;
 }
@@ -5868,6 +5891,54 @@ async function saveChallengeEdit(id) {
   await updateChallenge(id);
 }
 
+// Minimal, XSS-safe Markdown renderer (input is HTML-escaped first, then formatted).
+// Supports: headings, **bold**, *italic*, `code`, ``` fenced code ```, lists, > quotes, [links](http/https), line breaks.
+function renderMarkdown(src) {
+  const text = String(src ?? '').replace(/\r\n?/g, '\n');
+  if (!text.trim()) return '';
+  const esc = t => t.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+  const inline = t => esc(t)
+    .replace(/`([^`\n]+)`/g, '<code>$1</code>')
+    .replace(/\*\*([^*\n]+)\*\*/g, '<strong>$1</strong>')
+    .replace(/(^|[^*\w])\*([^*\n]+)\*(?!\*)/g, '$1<em>$2</em>')
+    .replace(/(^|[^_\w])_([^_\n]+)_(?![_\w])/g, '$1<em>$2</em>')
+    .replace(/\[([^\]\n]+)\]\((https?:\/\/[^\s)]+)\)/g, '<a href="$2" target="_blank" rel="noopener noreferrer">$1</a>');
+  const out = [];
+  const lines = text.split('\n');
+  let i = 0;
+  while (i < lines.length) {
+    const line = lines[i];
+    if (/^```/.test(line)) {
+      const buf = [];
+      i++;
+      while (i < lines.length && !/^```/.test(lines[i])) buf.push(lines[i++]);
+      i++;
+      out.push(`<pre><code>${esc(buf.join('\n'))}</code></pre>`);
+    } else if (/^\s*$/.test(line)) {
+      i++;
+    } else if (/^#{1,6}\s/.test(line)) {
+      const lvl = Math.min(line.match(/^#+/)[0].length + 2, 6);
+      out.push(`<h${lvl}>${inline(line.replace(/^#+\s+/, ''))}</h${lvl}>`);
+      i++;
+    } else if (/^\s*[-*+]\s+/.test(line) || /^\s*\d+[.)]\s+/.test(line)) {
+      const ordered = /^\s*\d+[.)]\s+/.test(line);
+      const re = ordered ? /^\s*\d+[.)]\s+/ : /^\s*[-*+]\s+/;
+      const items = [];
+      while (i < lines.length && re.test(lines[i])) items.push(`<li>${inline(lines[i++].replace(re, ''))}</li>`);
+      out.push(`<${ordered ? 'ol' : 'ul'}>${items.join('')}</${ordered ? 'ol' : 'ul'}>`);
+    } else if (/^>\s?/.test(line)) {
+      const buf = [];
+      while (i < lines.length && /^>\s?/.test(lines[i])) buf.push(inline(lines[i++].replace(/^>\s?/, '')));
+      out.push(`<blockquote>${buf.join('<br>')}</blockquote>`);
+    } else {
+      const buf = [];
+      while (i < lines.length && !/^\s*$/.test(lines[i]) && !/^(```|#{1,6}\s|>\s?|\s*[-*+]\s+|\s*\d+[.)]\s+)/.test(lines[i])) buf.push(inline(lines[i++]));
+      out.push(`<p>${buf.join('<br>')}</p>`);
+    }
+  }
+  return out.join('');
+}
+
 function escHtml(s) { return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
 
 async function updateChallenge(id) {
@@ -5890,6 +5961,7 @@ async function updateChallenge(id) {
     ch_text_key: challenge_type === 'text' ? val(`#ch-textkey-${id}`) : null,
     ch_model: challenge_type !== 'text' ? (val(`#ch-model-${id}`) || null) : null,
     hint: val(`#ch-hint-${id}`) || null,
+    hint_penalty: val(`#ch-hintpen-${id}`) === '' ? null : parseInt(val(`#ch-hintpen-${id}`), 10),
   };
   await apiFetch(`/api/challenges/${id}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
   const idx = _challengesCache.findIndex(c => c.id === id);
@@ -6014,8 +6086,8 @@ function toggleNewChallengeRow() {
       </td>
     </tr>
     <tr class="challenge-admin-row">
-      <td class="challenge-label-cell">Hint <span style="font-weight:400;color:var(--text-muted);font-size:11px">(-5 pts)</span></td>
-      <td class="challenge-value-cell"><textarea class="adm-inline-input" id="new-ch-hint" placeholder="Optional hint text for participants" rows="1" style="width:100%;resize:none;overflow:hidden;" oninput="this.style.height='auto';this.style.height=this.scrollHeight+'px'"></textarea></td>
+      <td class="challenge-label-cell">Hint <span style="font-weight:400;color:var(--text-muted);font-size:11px">(-${_hintPenalty} pts)</span></td>
+      <td class="challenge-value-cell"><textarea class="adm-inline-input" id="new-ch-hint" placeholder="Optional hint text for participants" rows="1" style="width:100%;resize:none;overflow:hidden;" oninput="this.style.height='auto';this.style.height=this.scrollHeight+'px'"></textarea><div style="margin-top:6px;display:flex;gap:8px;align-items:center;"><input class="adm-inline-input" type="number" min="0" id="new-ch-hintpen" style="width:70px;" placeholder="${_hintPenalty}" title="Blank = default hint penalty"><span style="color:var(--text-muted);font-size:11px;">pts penalty (blank = default)</span></div></td>
     </tr>
     <tr class="challenge-admin-row challenge-group-end">
       <td colspan="2" style="padding:10px 12px;text-align:right;border-top:1px solid var(--border);">
@@ -6084,8 +6156,10 @@ async function addChallenge() {
   const ns_time_filter = Math.min(60, Math.max(10, parseInt(document.getElementById('new-ch-time')?.value, 10) || 30));
   const ch_points = parseInt(document.getElementById('new-ch-points')?.value, 10) || 50;
   const hint = document.getElementById('new-ch-hint')?.value.trim() || null;
+  const hpRaw = document.getElementById('new-ch-hintpen')?.value;
+  const hint_penalty = hpRaw === '' || hpRaw == null ? null : parseInt(hpRaw, 10);
   const body = {
-    title, description, ...typePayload, visible: 0, ns_time_filter, ch_points, hint,
+    title, description, ...typePayload, visible: 0, ns_time_filter, ch_points, hint, hint_penalty,
     ch_activity: challenge_type !== 'text' ? document.getElementById('new-ch-activity')?.value : null,
     ch_gateway_action: challenge_type !== 'text' ? document.getElementById('new-ch-gwaction')?.value : null,
     ch_transaction_type: challenge_type !== 'text' ? typeToTransactionType(challenge_type) : null,
@@ -6322,6 +6396,7 @@ async function loadParticipantChallenges() {
     _ctfState = data.ctf_state || 'stop';
     participantChallenges = data.challenges || data;
     participantTotalPoints = data.total_points ?? 0;
+    if (data.hint_penalty != null) _hintPenalty = data.hint_penalty;
     participantAttemptCount = data.attempt_count ?? 0;
     renderCTFStateButtons(_ctfState);
     renderCTFStateBanner();
@@ -6364,11 +6439,13 @@ function updateChatInputState() {
 }
 
 function confirmUseHint(challengeId) {
+  const _hc = participantChallenges.find(x => x.id === challengeId);
+  const cost = _hc?.hint_cost ?? _hintPenalty;
   showConfirm({
     title: 'Use hint?',
     subtitle: 'This action cannot be undone',
-    body: 'Using this hint will cost you -5 points. This action cannot be undone.',
-    okLabel: 'Use hint (-5 pts)',
+    body: `Using this hint will cost you -${cost} points. This action cannot be undone.`,
+    okLabel: `Use hint (-${cost} pts)`,
     onOk: () => useHint(challengeId),
   });
 }
@@ -6384,7 +6461,7 @@ async function useHint(challengeId) {
       // Show hint in card without full re-render
       const revealEl = document.getElementById(`ch-hint-reveal-${challengeId}`);
       const textEl = document.getElementById(`ch-hint-text-${challengeId}`);
-      if (textEl) textEl.textContent = data.hint;
+      if (textEl) textEl.innerHTML = renderMarkdown(data.hint);
       if (revealEl) revealEl.style.display = '';
       // Replace "Use hint" button with "Hint used"
       const btn = document.querySelector(`button[onclick="confirmUseHint(${challengeId})"]`);
@@ -6456,7 +6533,7 @@ function renderParticipantChallenges() {
             ${ptsLabel}
           </div>
           <div style="font-size:${isCompleted ? '13px' : '14px'};font-weight:${titleWeight};color:${titleColor};margin-bottom:${isCompleted ? '0' : '4px'};">${escHtml(c.title)}</div>
-          ${c.description && !isCompleted ? `<div style="font-size:12px;color:var(--text-secondary);line-height:1.4;margin-bottom:7px;">${escHtml(c.description)}</div>` : ''}
+          ${c.description && !isCompleted ? `<div class="md-content" style="font-size:12px;color:var(--text-secondary);line-height:1.4;margin-bottom:7px;">${renderMarkdown(c.description)}</div>` : ''}
           ${isCompleted
             ? ``
             : isLocked
@@ -6475,7 +6552,7 @@ function renderParticipantChallenges() {
                     : `<button onclick="confirmUseHint(${c.id})" style="padding:4px 12px;font-size:12px;border:1px solid #f59e0b;background:transparent;color:#f59e0b;border-radius:6px;cursor:pointer;font-weight:600;">Use hint</button>`
                 ) : ''}
               </div>
-              ${c.hint_used ? `<div id="ch-hint-reveal-${c.id}" style="margin-top:7px;padding:8px 10px;background:rgba(245,158,11,0.08);border:1px solid rgba(245,158,11,0.3);border-radius:6px;font-size:12px;color:var(--text-secondary);"><strong style="color:#f59e0b;">Hint:</strong> <span id="ch-hint-text-${c.id}">${escHtml(c.hint || '')}</span></div>` : `<div id="ch-hint-reveal-${c.id}" style="display:none;margin-top:7px;padding:8px 10px;background:rgba(245,158,11,0.08);border:1px solid rgba(245,158,11,0.3);border-radius:6px;font-size:12px;color:var(--text-secondary);"><strong style="color:#f59e0b;">Hint:</strong> <span id="ch-hint-text-${c.id}"></span></div>`}`
+              ${c.hint_used ? `<div id="ch-hint-reveal-${c.id}" style="margin-top:7px;padding:8px 10px;background:rgba(245,158,11,0.08);border:1px solid rgba(245,158,11,0.3);border-radius:6px;font-size:12px;color:var(--text-secondary);"><strong style="color:#f59e0b;">Hint:</strong> <div class="md-content" id="ch-hint-text-${c.id}">${renderMarkdown(c.hint || '')}</div></div>` : `<div id="ch-hint-reveal-${c.id}" style="display:none;margin-top:7px;padding:8px 10px;background:rgba(245,158,11,0.08);border:1px solid rgba(245,158,11,0.3);border-radius:6px;font-size:12px;color:var(--text-secondary);"><strong style="color:#f59e0b;">Hint:</strong> <div class="md-content" id="ch-hint-text-${c.id}"></div></div>`}`
           }
       </div>
     </div>`;

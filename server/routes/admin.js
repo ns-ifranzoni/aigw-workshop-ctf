@@ -3,6 +3,7 @@ const path = require('path');
 const bcrypt = require('bcrypt');
 const { v4: uuidv4 } = require('uuid');
 const db = require('../db');
+const { setSetting } = require('../settings-cache');
 const { requireAdmin, requireAuth } = require('../middleware/auth');
 const ns = require('../netskope');
 const PARTICIPANT_NAMES = require('../participant-names');
@@ -1934,6 +1935,18 @@ router.put('/settings/max-retries', requireAdmin, (req, res) => {
   const val = parseInt(req.body.max_retries, 10);
   if (isNaN(val) || val < 0) return res.status(400).json({ error: 'Invalid value' });
   db.prepare("INSERT OR REPLACE INTO settings (key, value) VALUES ('max_retries', ?)").run(String(val));
+  res.json({ ok: true });
+});
+
+router.get('/settings/hint-penalty', requireAdmin, (req, res) => {
+  const v = parseInt(db.prepare("SELECT value FROM settings WHERE key = 'hint_penalty'").get()?.value, 10);
+  res.json({ hint_penalty: Number.isNaN(v) || v < 0 ? 5 : v });
+});
+
+router.put('/settings/hint-penalty', requireAdmin, (req, res) => {
+  const val = parseInt(req.body.hint_penalty, 10);
+  if (isNaN(val) || val < 0) return res.status(400).json({ error: 'Invalid value' });
+  setSetting('hint_penalty', String(val));
   res.json({ ok: true });
 });
 

@@ -19,8 +19,8 @@ router.get('/telemetry', (req, res) => {
   const rankingRows = db.prepare(`
     SELECT
       COALESCE(ac.username, cc.participant_code) as name,
-      COALESCE(SUM(cc.points_earned), 0) - 5 * COALESCE((
-        SELECT COUNT(*) FROM challenge_attempts ca WHERE ca.participant_code = cc.participant_code
+      COALESCE(SUM(cc.points_earned), 0) - COALESCE((
+        SELECT SUM(CASE WHEN ca.is_hint = 1 THEN COALESCE((SELECT hp.hint_penalty FROM challenges hp WHERE hp.id = ca.challenge_id), ?) ELSE 5 END) FROM challenge_attempts ca WHERE ca.participant_code = cc.participant_code
       ), 0) as pts
     FROM challenge_completions cc
     JOIN challenges c ON c.id = cc.challenge_id AND c.visible = 1
@@ -28,7 +28,7 @@ router.get('/telemetry', (req, res) => {
     GROUP BY cc.participant_code
     ORDER BY pts DESC
     LIMIT 3
-  `).all();
+  `).all(getHintPenalty());
 
   const ranking = rankingRows.filter(r => r.pts > 0).map((r, i) => ({ pos: i + 1, name: r.name, pts: r.pts }));
 
@@ -44,6 +44,28 @@ router.get('/registration-status', (req, res) => {
   const row = db.prepare("SELECT value FROM settings WHERE key = 'registration_open'").get();
   res.json({ open: row?.value === '1' || row?.value === 'true' });
 });
+
+// Points deducted when a participant reveals a hint (admin-configurable, default 5)
+function getHintPenalty() {
+  const v = parseInt(getSetting('hint_penalty'), 10);
+  return Number.isNaN(v) || v < 0 ? 5 : v;
+}
+
+// Parse an optional per-challenge penalty: blank/invalid -> null (use global default)
+function parseHintPenalty(v) {
+  if (v === null || v === undefined || String(v).trim() === '') return null;
+  const n = parseInt(v, 10);
+  return Number.isNaN(n) || n < 0 ? null : n;
+}
+
+// Total points a participant has lost to hints (per-challenge override, else global default)
+function hintCostTotal(code) {
+  return db.prepare(`
+    SELECT COALESCE(SUM(COALESCE(c.hint_penalty, ?)), 0) AS n
+    FROM challenge_attempts ca JOIN challenges c ON c.id = ca.challenge_id
+    WHERE ca.participant_code = ? AND ca.is_hint = 1
+  `).get(getHintPenalty(), code).n;
+}
 
 // getSetting / setSetting provided by settings-cache (with 5 s TTL + write invalidation)
 
@@ -229,7 +251,7 @@ function buildTransactionQuery(activity, gatewayAction, transactionType) {
 
 router.post('/', requireAdmin, (req, res) => {
   const { title, description, ns_time_filter, visible, order_num,
-          challenge_type, ch_activity, ch_gateway_action, ch_text_key, ch_model, ch_points, hint } = req.body;
+          challenge_type, ch_activity, ch_gateway_action, ch_text_key, ch_model, ch_points, hint, hint_penalty } = req.body;
   if (!title) return res.status(400).json({ error: 'Title required' });
   const timeFilter = Math.min(60, Math.max(10, parseInt(ns_time_filter) || 30));
   const type = normalizeChallengeType(challenge_type, req.body.challenge_group);
@@ -238,17 +260,17 @@ router.post('/', requireAdmin, (req, res) => {
   const maxOrder = db.prepare('SELECT MAX(order_num) as m FROM challenges').get().m || 0;
   const result = db.prepare(`
     INSERT INTO challenges (title, description, ns_query, ns_event_type, ns_time_filter, visible, order_num,
-      challenge_type, ch_activity, ch_gateway_action, ch_transaction_type, ch_text_key, ch_model, ch_points, hint)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      challenge_type, ch_activity, ch_gateway_action, ch_transaction_type, ch_text_key, ch_model, ch_points, hint, hint_penalty)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
   `).run(title, description || '', ns_query, 'application', timeFilter, visible ? 1 : 0, order_num ?? maxOrder + 1,
          type, ch_activity || null, ch_gateway_action || null, resolvedTxType || null, ch_text_key || null,
-         ch_model?.trim() || null, parseInt(ch_points) || 50, hint?.trim() || null);
+         ch_model?.trim() || null, parseInt(ch_points) || 50, hint?.trim() || null, parseHintPenalty(hint_penalty));
   res.json({ id: result.lastInsertRowid });
 });
 
 router.put('/:id', requireAdmin, (req, res) => {
   const { title, description, ns_time_filter, visible, order_num,
-          challenge_type, ch_activity, ch_gateway_action, ch_text_key, ch_model, ch_points, hint } = req.body;
+          challenge_type, ch_activity, ch_gateway_action, ch_text_key, ch_model, ch_points, hint, hint_penalty } = req.body;
   const current = db.prepare('SELECT order_num FROM challenges WHERE id = ?').get(req.params.id);
   const nextOrder = order_num ?? current?.order_num ?? 0;
   const timeFilter = Math.min(60, Math.max(10, parseInt(ns_time_filter) || 30));
@@ -257,11 +279,11 @@ router.put('/:id', requireAdmin, (req, res) => {
   const ns_query = (type !== 'text' && !type.startsWith('policy_')) ? buildTransactionQuery(ch_activity, ch_gateway_action, resolvedTxType) : '';
   db.prepare(`
     UPDATE challenges SET title=?, description=?, ns_query=?, ns_event_type=?, ns_time_filter=?, visible=?, order_num=?,
-      challenge_type=?, ch_activity=?, ch_gateway_action=?, ch_transaction_type=?, ch_text_key=?, ch_model=?, ch_points=?, hint=?
+      challenge_type=?, ch_activity=?, ch_gateway_action=?, ch_transaction_type=?, ch_text_key=?, ch_model=?, ch_points=?, hint=?, hint_penalty=?
     WHERE id=?
   `).run(title, description || '', ns_query, 'application', timeFilter, visible ? 1 : 0, nextOrder,
          type, ch_activity || null, ch_gateway_action || null, resolvedTxType || null, ch_text_key || null,
-         ch_model?.trim() || null, parseInt(ch_points) || 50, hint?.trim() || null, req.params.id);
+         ch_model?.trim() || null, parseInt(ch_points) || 50, hint?.trim() || null, parseHintPenalty(hint_penalty), req.params.id);
   res.json({ ok: true });
 });
 
@@ -300,13 +322,13 @@ router.delete('/:id', requireAdmin, (req, res) => {
 // Export CSV
 router.get('/export', requireAdmin, (req, res) => {
   const rows = db.prepare('SELECT * FROM challenges ORDER BY order_num ASC, id ASC').all();
-  const header = 'seq,title,description,ns_query,ns_event_type,ns_time_filter,visible,challenge_group,challenge_type,ch_activity,ch_gateway_action,ch_transaction_type,ch_text_key,ch_model,ch_points,hint';
+  const header = 'seq,title,description,ns_query,ns_event_type,ns_time_filter,visible,challenge_group,challenge_type,ch_activity,ch_gateway_action,ch_transaction_type,ch_text_key,ch_model,ch_points,hint,hint_penalty';
   const esc = v => `"${String(v ?? '').replace(/"/g, '""')}"`;
   const lines = rows.map((r, i) => [
     i + 1, esc(r.title), esc(r.description), esc(r.ns_query), esc(r.ns_event_type),
     r.ns_time_filter, r.visible, esc(typeToGroup(r.challenge_type)), esc(r.challenge_type ?? 'transaction_id'),
     esc(r.ch_activity ?? ''), esc(r.ch_gateway_action ?? ''), esc(r.ch_transaction_type ?? ''),
-    esc(r.ch_text_key ?? ''), esc(r.ch_model ?? ''), r.ch_points ?? 50, esc(r.hint ?? '')
+    esc(r.ch_text_key ?? ''), esc(r.ch_model ?? ''), r.ch_points ?? 50, esc(r.hint ?? ''), r.hint_penalty ?? ''
   ].join(','));
   res.setHeader('Content-Type', 'text/csv');
   res.setHeader('Content-Disposition', 'attachment; filename="challenges.csv"');
@@ -360,8 +382,8 @@ router.post('/import', requireAdmin, (req, res) => {
       : '';
     db.prepare(`INSERT INTO challenges
       (order_num, title, description, ns_query, ns_event_type, ns_time_filter, visible,
-       challenge_type, ch_activity, ch_gateway_action, ch_transaction_type, ch_text_key, ch_model, ch_points, hint)
-      VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`)
+       challenge_type, ch_activity, ch_gateway_action, ch_transaction_type, ch_text_key, ch_model, ch_points, hint, hint_penalty)
+      VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`)
       .run(
         parseInt(cols[idx('seq')] || cols[idx('order_num')]) || maxOrder + imported + 1,
         title,
@@ -377,7 +399,8 @@ router.post('/import', requireAdmin, (req, res) => {
         cols[idx('ch_text_key')] || null,
         cols[idx('ch_model')] || null,
         parseInt(cols[idx('ch_points')]) || 50,
-        cols[idx('hint')] || null
+        cols[idx('hint')] || null,
+        parseHintPenalty(cols[idx('hint_penalty')])
       );
     imported++;
     } catch(e) { console.error(`[import] row ${i} error:`, e.message); }
@@ -388,6 +411,7 @@ router.post('/import', requireAdmin, (req, res) => {
 // Admin: completions detail for a student
 router.get('/participants/:code/completions', requireAdmin, (req, res) => {
   const code = req.params.code.toUpperCase();
+  const hintPenalty = getHintPenalty();
   const completions = db.prepare(`
     SELECT c.id, c.title, c.order_num, cc.completed_at as ts, cc.points_earned, 'success' as result
     FROM challenge_completions cc
@@ -401,17 +425,17 @@ router.get('/participants/:code/completions', requireAdmin, (req, res) => {
     WHERE ca.participant_code = ? AND ca.is_hint = 0
   `).all(code);
   const hints = db.prepare(`
-    SELECT c.id, c.title, c.order_num, hu.used_at as ts, -5 as points_earned, 'hint' as result
+    SELECT c.id, c.title, c.order_num, hu.used_at as ts, -COALESCE(c.hint_penalty, ?) as points_earned, 'hint' as result
     FROM hint_usage hu
     JOIN challenges c ON c.id = hu.challenge_id
     WHERE hu.participant_code = ?
-  `).all(code);
+  `).all(hintPenalty, code);
   const history = [...completions, ...failed, ...hints].sort((a, b) => (a.ts > b.ts ? 1 : -1));
   const total = db.prepare('SELECT COUNT(*) as n FROM challenges WHERE visible = 1').get().n;
-  const allAttempts = db.prepare('SELECT COUNT(*) as n FROM challenge_attempts WHERE participant_code = ?').get(code).n;
-  const totalPoints = completions.reduce((s, c) => s + (c.points_earned || 0), 0) - allAttempts * 5;
+  const failedAttempts = db.prepare('SELECT COUNT(*) as n FROM challenge_attempts WHERE participant_code = ? AND is_hint = 0').get(code).n;
+  const totalPoints = completions.reduce((s, c) => s + (c.points_earned || 0), 0) - failedAttempts * 5 - hintCostTotal(code);
   // Per-challenge summary for the sidebar
-  const allChallenges = db.prepare('SELECT id, title, order_num, ch_points, hint FROM challenges WHERE visible = 1 ORDER BY order_num ASC, id ASC').all();
+  const allChallenges = db.prepare('SELECT id, title, order_num, ch_points, hint, hint_penalty FROM challenges WHERE visible = 1 ORDER BY order_num ASC, id ASC').all();
   const completedIds = new Set(completions.map(c => c.id));
   const hintUsedIds = new Set(hints.map(h => h.id));
   const failedCountMap = {};
@@ -427,7 +451,7 @@ router.get('/participants/:code/completions', requireAdmin, (req, res) => {
     failed_attempts: failedCountMap[c.id] || 0,
     points_earned: completedIds.has(c.id) ? (completions.find(x => x.id === c.id)?.points_earned || c.ch_points || 50) : null,
   }));
-  res.json({ history, total, total_points: totalPoints, challenges });
+  res.json({ history, total, total_points: totalPoints, hint_penalty: hintPenalty, challenges });
 });
 
 // Reset completions for a student
@@ -462,8 +486,8 @@ router.get('/leaderboard', requireAuth, (req, res) => {
       ac.code AS participant_code,
       ac.icon,
       COUNT(cc.id) AS completed,
-      COALESCE(SUM(cc.points_earned), 0) - 5 * COALESCE((
-        SELECT COUNT(*) FROM challenge_attempts ca WHERE ca.participant_code = ac.code
+      COALESCE(SUM(cc.points_earned), 0) - COALESCE((
+        SELECT SUM(CASE WHEN ca.is_hint = 1 THEN COALESCE((SELECT hp.hint_penalty FROM challenges hp WHERE hp.id = ca.challenge_id), ?) ELSE 5 END) FROM challenge_attempts ca WHERE ca.participant_code = ac.code
       ), 0) AS total_points
     FROM access_codes ac
     LEFT JOIN challenge_completions cc
@@ -473,7 +497,7 @@ router.get('/leaderboard', requireAuth, (req, res) => {
     GROUP BY ac.code
     ORDER BY total_points DESC, completed DESC, MIN(cc.completed_at) ASC
     LIMIT 20
-  `).all();
+  `).all(getHintPenalty());
   res.json({ total, rows });
 });
 
@@ -484,8 +508,8 @@ router.get('/podium', requireAuth, (req, res) => {
       cc.participant_code,
       ac.icon,
       COUNT(cc.id) as completed,
-      COALESCE(SUM(cc.points_earned), 0) - 5 * COALESCE((
-        SELECT COUNT(*) FROM challenge_attempts ca WHERE ca.participant_code = cc.participant_code
+      COALESCE(SUM(cc.points_earned), 0) - COALESCE((
+        SELECT SUM(CASE WHEN ca.is_hint = 1 THEN COALESCE((SELECT hp.hint_penalty FROM challenges hp WHERE hp.id = ca.challenge_id), ?) ELSE 5 END) FROM challenge_attempts ca WHERE ca.participant_code = cc.participant_code
       ), 0) as total_points
     FROM challenge_completions cc
     JOIN challenges c ON c.id = cc.challenge_id AND c.visible = 1
@@ -493,7 +517,7 @@ router.get('/podium', requireAuth, (req, res) => {
     GROUP BY cc.participant_code
     ORDER BY total_points DESC, MIN(cc.completed_at) ASC
     LIMIT 3
-  `).all();
+  `).all(getHintPenalty());
   res.json({ total, rows });
 });
 
@@ -501,6 +525,7 @@ router.get('/podium', requireAuth, (req, res) => {
 
 router.get('/participant/history', requireAuth, (req, res) => {
   const code = req.user.code;
+  const hintPenalty = getHintPenalty();
   const completions = db.prepare(`
     SELECT c.title, c.order_num, cc.completed_at as ts, cc.points_earned, 'success' as result
     FROM challenge_completions cc
@@ -514,14 +539,14 @@ router.get('/participant/history', requireAuth, (req, res) => {
     WHERE ca.participant_code = ? AND ca.is_hint = 0
   `).all(code);
   const hints = db.prepare(`
-    SELECT c.title, c.order_num, hu.used_at as ts, -5 as points_earned, 'hint' as result
+    SELECT c.title, c.order_num, hu.used_at as ts, -COALESCE(c.hint_penalty, ?) as points_earned, 'hint' as result
     FROM hint_usage hu
     JOIN challenges c ON c.id = hu.challenge_id
     WHERE hu.participant_code = ?
-  `).all(code);
+  `).all(hintPenalty, code);
   const history = [...completions, ...failed, ...hints].sort((a, b) => (a.ts > b.ts ? 1 : -1));
-  const allAttempts = db.prepare('SELECT COUNT(*) as n FROM challenge_attempts WHERE participant_code = ?').get(code).n;
-  const totalPoints = completions.reduce((s, c) => s + (c.points_earned || 0), 0) - allAttempts * 5;
+  const failedAttempts = db.prepare('SELECT COUNT(*) as n FROM challenge_attempts WHERE participant_code = ? AND is_hint = 0').get(code).n;
+  const totalPoints = completions.reduce((s, c) => s + (c.points_earned || 0), 0) - failedAttempts * 5 - hintCostTotal(code);
   const completedCount = completions.length;
   const total = db.prepare('SELECT COUNT(*) as n FROM challenges WHERE visible = 1').get().n;
   const hintsCount = hints.length;
@@ -555,8 +580,10 @@ router.get('/participant', requireAuth, (req, res) => {
   const completions = db.prepare('SELECT challenge_id, completed_at, points_earned FROM challenge_completions WHERE participant_code = ?').all(code);
   const completedMap = Object.fromEntries(completions.map(c => [c.challenge_id, { completed_at: c.completed_at, points_earned: c.points_earned }]));
   const attemptCount = db.prepare('SELECT COUNT(*) as n FROM challenge_attempts WHERE participant_code = ?').get(code).n;
+  const hintAttemptCount = db.prepare('SELECT COUNT(*) as n FROM challenge_attempts WHERE participant_code = ? AND is_hint = 1').get(code).n;
+  const hintPenalty = getHintPenalty();
   const totalPointsEarned = completions.reduce((sum, c) => sum + (c.points_earned || 0), 0);
-  const totalPoints = totalPointsEarned - attemptCount * 5;
+  const totalPoints = totalPointsEarned - (attemptCount - hintAttemptCount) * 5 - hintCostTotal(code);
   const maxRetries = parseInt(db.prepare("SELECT value FROM settings WHERE key = 'max_retries'").get()?.value) || 0;
   const COOLDOWN_MS = 5 * 60 * 1000;
   const attemptsPerChallenge = db.prepare(
@@ -575,6 +602,7 @@ router.get('/participant', requireAuth, (req, res) => {
     }
   }
 
+  const hintPenaltyDefault = getHintPenalty();
   const hintUsed = new Set(
     db.prepare('SELECT challenge_id FROM hint_usage WHERE participant_code = ?').all(code).map(r => r.challenge_id)
   );
@@ -590,6 +618,7 @@ router.get('/participant', requireAuth, (req, res) => {
         ...c,
         hint: hintUsed.has(c.id) ? c.hint : undefined,
         has_hint: !!(c.hint && c.hint.trim()),
+        hint_cost: c.hint_penalty ?? hintPenaltyDefault,
         hint_used: hintUsed.has(c.id),
         completed: !!completedMap[c.id],
         completed_at: completedMap[c.id]?.completed_at || null,
@@ -601,6 +630,7 @@ router.get('/participant', requireAuth, (req, res) => {
       };
     }),
     total_points: totalPoints,
+    hint_penalty: hintPenalty,
     attempt_count: attemptCount,
     max_retries: maxRetries || null,
   });

@@ -8892,3 +8892,15 @@ th[data-sortable][aria-sort="desc"] .sort-arrow { opacity: 1; color: var(--accen
 
 .gateway-same-check { display: inline-flex; align-items: center; gap: 6px; margin-top: 6px; font-size: 12px; color: var(--text-secondary); cursor: pointer; }
 .gateway-same-check input { margin: 0; }
+
+/* Markdown content (challenge description / hint) */
+.md-content > :first-child { margin-top: 0; }
+.md-content > :last-child { margin-bottom: 0; }
+.md-content p { margin: 0 0 6px; }
+.md-content h3, .md-content h4, .md-content h5, .md-content h6 { margin: 8px 0 4px; font-size: 1em; font-weight: 700; color: var(--text-primary); }
+.md-content ul, .md-content ol { margin: 4px 0 6px; padding-left: 20px; }
+.md-content code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 0.92em; padding: 1px 5px; border-radius: 4px; background: rgba(127,127,127,0.18); }
+.md-content pre { margin: 6px 0; padding: 8px 10px; border-radius: 6px; background: rgba(127,127,127,0.15); overflow-x: auto; white-space: pre; }
+.md-content pre code { padding: 0; background: none; }
+.md-content blockquote { margin: 6px 0; padding: 2px 10px; border-left: 3px solid var(--border); color: var(--text-muted); }
+.md-content a { color: var(--accent, #3b82f6); text-decoration: underline; }

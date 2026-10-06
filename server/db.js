@@ -166,6 +166,8 @@ try { db.exec(`ALTER TABLE challenges ADD COLUMN ch_transaction_type TEXT DEFAUL
 try { db.exec(`ALTER TABLE challenges ADD COLUMN ch_text_key TEXT DEFAULT NULL`); } catch {}
 try { db.exec(`ALTER TABLE challenges ADD COLUMN ch_model TEXT DEFAULT NULL`); } catch {}
 try { db.exec(`ALTER TABLE challenges ADD COLUMN ch_points INTEGER NOT NULL DEFAULT 50`); } catch {}
+// Per-challenge hint penalty override (NULL = use the global hint_penalty setting)
+try { db.exec(`ALTER TABLE challenges ADD COLUMN hint_penalty INTEGER`); } catch {}
 try { db.exec(`ALTER TABLE challenge_completions ADD COLUMN points_earned INTEGER NOT NULL DEFAULT 50`); } catch {}
 db.exec(`CREATE TABLE IF NOT EXISTS challenge_attempts (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
