@@ -1,10 +1,35 @@
-seq,title,description,ns_query,ns_event_type,ns_time_filter,visible,challenge_group,challenge_type,ch_activity,ch_gateway_action,ch_transaction_type,ch_text_key,ch_model,ch_points,hint
-1,"Netskope AI Gateway Information","Let's check if you can access to Netskope tenant. Connect to the Netskope tenant and identify the hostname configured for the AI Gateway.","","application",10,1,"text","text","","","","%gateway_url","",50,"Go to Netkope tenant > settings > Cloud Security Platform > VM Onboarding. Drill down on hostname to see specifics."
-2,"Token based authentication","There is no user identity involved, such as IdP, username, password, or MFA. Agentic AI is based on token authentication. Find the Token Group assigned to you for this lab.","","application",30,1,"text","text","","","","%tokengroup","",50,"You will find it under the Settings section in the vertical panel. This is important, as you will use it throughout the entire lab."
-3,"Your first ""Access control"" policy","Let’s start with AI Gateway policies.  Create an Access Control policy using the following exact parameters:  * Source: Your assigned Token Group * AI Provider & Model: openai and gpt-4.1-mini * Activity: Prompt * Action: Replace * Replacement text: You shall not pass! * Name: CHANGEYOURSTUDENTID * Status: Enabled  Then click Save and Apply.","","application",30,1,"policy","policy_access","Prompt","Replace","Access","","gpt-4.1-mini",50,"Be careful with every detail. If anything does not match exactly, it will not count."
-4,"Testing Access control in your chat","Let’s test your Access Control policy. In Settings, select OpenAI as the LLM provider and gpt-4.1-mini as the model. Then send a chat request using the Secured Path. If your prompt is replaced with the message you configured, you can validate this challenge.","activity eq ""Prompt"" AND policy_action eq ""replace"" AND transaction_category eq ""access""","application",30,1,"events","event_access","Prompt","Replace","Access","","",50,""
-5,"Data Leak Prevention between Agentic AI and LLM communications","Have you noticed that it’s the same DLP engine across everything, even for Netskope AI Gateway? Create a DLP Policy with this configuration: * Source: Your assigned Token Group * Activity: Prompt * DLP profile: select ""Payment Card Industry Data Security Standard. PCI-DSS"" * Action: Replace * Replacement text: ""Same Engine, more benefits"" * Name: YOURSTUDENTNAME-DLP * Status: Enabled > Then click Apply.","","application",30,1,"policy","policy_dlp","Prompt","Replace","DLP","","",50,"Check all the details carefully. Did you apply changes?"
-6,"Let's test your DLP policy","Send to your secure path your DLP policy, just send a prompt with PCI information. Which is the behaviour? if you have received you replacement message, then check this challenge.","activity eq ""Prompt"" AND policy_action eq ""replace"" AND transaction_category eq ""dlp""","application",30,1,"events","event_dlp","Prompt","Replace","DLP","","",50,"Check all the details carefully, but keep in mind that Netskope AI Gateway synchronizes configuration every 30 minutes. Before trying again, check Skope IT > Alerts to verify whether the policy has been triggered."
-7,"Guardrails for intent communications security","First of all, create your AI Guardrails profile with YOURSTUDENTNAME (remember to apply). Then create a new AI Gateway Policy > Guardrails, using: * Source: Your assigned Token Group * Activity: Prompt * AI Guardrails profile: select your AI Guardrails profile just created * Action: Replace * Replacement text: ""Guardrails to the Moon"" * Name: YOURSTUDENTNAME-AI GUARDRAILS * Status: Enabled > Then click Apply.","","application",30,1,"policy","policy_guardrails","Prompt","Replace","Guardrails","","",50,""
-8,"Time to test your Guardrails","Now it’s time to test the Guardrails policy you configured earlier. Try to trigger your Guardrails policy by sending a prompt that matches one of the categories enabled in the Guardrails profile.","activity eq ""Prompt"" AND policy_action eq ""replace"" AND transaction_category eq ""guardrails""","application",30,1,"events","event_guardrails","Prompt","Replace","Guardrails","","",50,""
-9,"Last but not least","Which is the Netskope AI Gateway current OS and version in the tenant?","","application",30,1,"text","text","","","","Ubuntu 24.04","",500,""
+seq,title,description,ns_query,ns_event_type,ns_time_filter,visible,challenge_group,challenge_type,ch_activity,ch_gateway_action,ch_transaction_type,ch_text_key,ch_model,ch_points,hint,hint_penalty
+1,"Netskope AI Gateway Information","Let's check if you can access to Netskope tenant. Connect to the Netskope tenant and identify the hostname configured for the AI Gateway.","","application",10,1,"text","text","","","","%gateway_url","",50,"Go to Netkope tenant > settings > Cloud Security Platform > VM Onboarding. Drill down on hostname to see specifics.",30
+2,"Token based authentication","There is no user identity involved, such as IdP, username, password, or MFA. Agentic AI is based on token authentication. Find the Token Group assigned to you for this lab.","","application",30,1,"text","text","","","","%tokengroup","",50,"You will find it under the Settings section in the vertical panel. This is important, as you will use it throughout the entire lab.",
+3,"Your first ""Access control"" policy","Let’s start with AI Gateway policies. Create an Access Control policy using the following exact parameters:
+-   Source: Your assigned Token Group
+-   AI Provider & Model: openai and gpt-4.1-mini
+-   Activity: Prompt
+-   Action: Replace
+-   Replacement text: You shall not pass!
+-   Name: CHANGEYOURSTUDENTID
+-   Status: Enabled
+Then click Save and Apply.","","application",30,1,"policy","policy_access","Prompt","Replace","Access","","gpt-4.1-mini",50,"Be careful with every detail. If anything does not match exactly, it will not count.",
+4,"Testing Access control in your chat","Let’s test your Access Control policy.
+<u>In Settings</u>, select OpenAI as the LLM provider and gpt-4.1-mini as the model. Then send a chat request using the Secured Path. If your prompt is replaced with the message you configured, you can validate this challenge.","activity eq ""Prompt"" AND policy_action eq ""replace"" AND transaction_category eq ""access""","application",30,1,"events","event_access","Prompt","Replace","Access","","",50,"",
+5,"Data Leak Prevention between Agentic AI and LLM communications","Have you noticed that it’s the same DLP engine across everything, even for Netskope AI Gateway? Create a DLP Policy with this configuration:
+-   Source: Your assigned Token Group
+-   Activity: Prompt
+-   DLP profile: select ""Payment Card Industry Data Security Standard. PCI-DSS""
+-   Action: Replace
+-   Replacement text: ""Same Engine, more benefits""
+-   Name: YOURSTUDENTNAME-DLP
+-   Status: Enabled
+Then click Apply.","","application",30,1,"policy","policy_dlp","Prompt","Replace","DLP","","",50,"Check all the details carefully. Did you apply changes?",
+6,"Let's test your DLP policy","Send to your secure path your DLP policy, just send a prompt with PCI information. Which is the behaviour? if you have received you replacement message, then check this challenge.","activity eq ""Prompt"" AND policy_action eq ""replace"" AND x_aig_policy_evaluation.type eq ""dlp""","application",30,1,"events","event_dlp","Prompt","Replace","DLP","","",50,"Check all the details carefully, but keep in mind that Netskope AI Gateway synchronizes configuration every 30 minutes. Before trying again, check Skope IT > Alerts to verify whether the policy has been triggered.",
+7,"Guardrails for intent communications security","First of all, create your AI Guardrails profile with YOURSTUDENTNAME (remember to apply). Then create a new AI Gateway Policy > Guardrails, using:
+-   Source: Your assigned Token Group
+-   Activity: Prompt
+-   AI Guardrails profile: select your AI Guardrails profile just created
+-   Action: Replace
+-   Replacement text: ""Guardrails to the Moon""
+-   Name: YOURSTUDENTNAME-AI GUARDRAILS
+-   Status: Enabled
+Then click Apply.","","application",30,1,"policy","policy_guardrails","Prompt","Replace","Guardrails","","",50,"",
+8,"Time to test your Guardrails","Now it’s time to test the Guardrails policy you configured earlier. Try to trigger your Guardrails policy by sending a prompt that matches one of the categories enabled in the Guardrails profile.","activity eq ""Prompt"" AND policy_action eq ""replace"" AND x_aig_policy_evaluation.type eq ""aisecurity""","application",30,1,"events","event_guardrails","Prompt","Replace","Guardrails","","",50,"",
+9,"Last but not least","Which is the Netskope AI Gateway current OS and version in the tenant?","","application",30,1,"text","text","","","","Ubuntu 24.04","",500,"",
