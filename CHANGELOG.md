@@ -1,5 +1,8 @@
 # Changelog
 
+## v1.2.2
+- **Fix:** the authentication rate limits are now sized for a classroom where almost every participant shares one public IP. Only failed attempts count, but a whole room can easily produce enough validation errors or "username already taken" responses to trip the old caps. The per-IP ceiling on login goes from 100 to 2000 failures per 15 min, registration from 15 to 1000 (the old value could lock the entire room out of registering for up to 15 minutes), and admin setup from 10 to 50. The per-account login limit (10 failures per username) is unchanged, so guessing a single password is still throttled.
+
 ## v1.2.1
 - **Feature:** the hint penalty is now configurable. **Control Center → Workshop Limits** has a new *Hint penalty (points)* field (default `5`, stored as `hint_penalty`), and each challenge can override it with its own *pts penalty* next to the hint text (blank = use the global default). Both are applied to the participant total, history, leaderboard, podium and dashboard ranking; the participant "Use hint" dialog shows the effective cost. Changing the global value also changes every challenge without an override. Failed attempts still cost 5. The CSV export/import gains a `hint_penalty` column (older CSVs still import).
 - **UI:** Workshop Limits has a **Default** button that loads the default values (100 prompts, 5 retries, 5 hint penalty); click Save to apply.
