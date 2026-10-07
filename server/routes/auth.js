@@ -17,7 +17,7 @@ const loginLimiter = limitFailures({
   scope: 'login',
   windowMs: 15 * 60 * 1000,
   max: 10,        // failures against one username from one IP
-  ipMax: 100,     // failures from one IP across all usernames (spraying)
+  ipMax: 2000,    // failures from one IP across all usernames (spraying); high because a whole classroom shares one public IP
   key: req => `${req.ip}:${String(req.body?.username || '').trim().toLowerCase()}`,
 });
 
@@ -26,14 +26,14 @@ const loginLimiter = limitFailures({
 const registerLimiter = limitFailures({
   scope: 'register',
   windowMs: 15 * 60 * 1000,
-  max: 15,
+  max: 1000,      // high on purpose: a whole classroom registers from one public IP and validation errors / taken usernames count as failures
   key: req => `${req.ip}`,
 });
 
 const adminSetupLimiter = limitFailures({
   scope: 'admin-setup',
   windowMs: 15 * 60 * 1000,
-  max: 10,
+  max: 50,
   key: req => `${req.ip}`,
 });
 
