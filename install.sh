@@ -71,6 +71,8 @@ as_root() { $SUDO "$@"; }
 
 # Non-interactive package managers (no debconf / needrestart prompts)
 export DEBIAN_FRONTEND=noninteractive NEEDRESTART_MODE=a NEEDRESTART_SUSPEND=1
+# Unattended: git must fail instead of asking for a username/password
+export GIT_TERMINAL_PROMPT=0
 
 # ---- OS / architecture detection -------------------------------------------
 [ -r /etc/os-release ] || die "Cannot detect the OS (/etc/os-release missing)."
@@ -178,6 +180,22 @@ COMPOSE_VER="$(as_root docker compose version --short 2>/dev/null | sed 's/^v//'
 
 # ---- 3. repository ---------------------------------------------------------
 log "3/7 Fetching the project (${BRANCH})"
+# Pre-flight: fail early with a precise reason instead of a git prompt
+if ! git_gh ls-remote --exit-code --heads "$REPO_URL" "$BRANCH" >/dev/null 2>&1; then
+  if [ -z "$GITHUB_TOKEN" ]; then
+    die "Cannot read $REPO_URL and GITHUB_TOKEN is empty. The repo is private: export GITHUB_TOKEN, and if you use sudo pass it explicitly:  sudo GITHUB_TOKEN=\"\$GITHUB_TOKEN\" bash install.sh"
+  fi
+  API_REPO="$(printf '%s' "$REPO_URL" | sed -E 's#^https://github.com/##; s#\.git$##')"
+  CODE="$(curl -s -o /dev/null -w '%{http_code}' --max-time 10 \
+          -H "Authorization: Bearer $GITHUB_TOKEN" "https://api.github.com/repos/${API_REPO}" || true)"
+  case "$CODE" in
+    401) die "GitHub rejected GITHUB_TOKEN (HTTP 401): it is invalid, expired or revoked." ;;
+    403) die "GitHub denied access (HTTP 403): the token lacks permission, or the org requires SSO authorization for it." ;;
+    404) die "Repository not visible with this token (HTTP 404). Give it read access to ${API_REPO} (fine-grained: Contents=Read; classic: scope 'repo')." ;;
+    200) die "The token can read the repository but git could not reach branch '$BRANCH' (BRANCH=$BRANCH)." ;;
+    *)   die "Cannot reach GitHub (HTTP ${CODE:-none}). Check outbound network access from this host." ;;
+  esac
+fi
 if [ ! -d "$APP_DIR/.git" ]; then
   as_root mkdir -p "$(dirname "$APP_DIR")"
   git_gh clone --branch "$BRANCH" "$REPO_URL" "$APP_DIR" \
