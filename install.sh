@@ -396,12 +396,13 @@ if [ "$CHECKS_OK" -eq 1 ]; then echo " Installation complete - all checks passed
 else echo " Installation finished with FAILED checks - see [FAIL] lines above."; fi
 echo ""
 echo " Open: ${URL}"
+echo " Admin user: ADMIN-2026"
 if [ "$ENABLE_PROXY" = "1" ]; then
   echo " The certificate is self-signed: the browser will warn once"
   echo " (Advanced -> Proceed). The connection is still TLS-encrypted."
 fi
 echo ""
-echo " IMPORTANT: the admin account has no password until someone sets it."
+echo " IMPORTANT: the admin account (ADMIN-2026) has no password until someone sets it."
 echo " Open the URL NOW and set the admin password - whoever gets there"
 echo " first claims the admin account. Until then, keep the Security Group"
 echo " restricted to your own IP."
