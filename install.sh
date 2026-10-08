@@ -167,8 +167,10 @@ if ! as_root docker compose version >/dev/null 2>&1; then
     "https://github.com/docker/compose/releases/latest/download/docker-compose-linux-${ARCH_RAW}"
   as_root chmod +x "$PLUGIN_DIR/docker-compose"
 fi
-if ! as_root docker buildx version >/dev/null 2>&1; then
-  info "Installing Docker Buildx plugin"
+# Recent Compose versions need Buildx >= 0.17.0; the distro package can be older
+BUILDX_VER="$(as_root docker buildx version 2>/dev/null | grep -oE 'v?[0-9]+\.[0-9]+\.[0-9]+' | head -n1 | sed 's/^v//' || true)"
+if [ -z "$BUILDX_VER" ] || ! version_ge "$BUILDX_VER" "0.17.0"; then
+  info "Installing Docker Buildx plugin (found: ${BUILDX_VER:-none}, need >= 0.17.0)"
   BUILDX_TAG="$(latest_tag docker/buildx)"
   as_root curl -fsSL -o "$PLUGIN_DIR/docker-buildx" \
     "https://github.com/docker/buildx/releases/download/${BUILDX_TAG}/buildx-${BUILDX_TAG}.linux-${ARCH_GO}"
@@ -176,6 +178,7 @@ if ! as_root docker buildx version >/dev/null 2>&1; then
 fi
 as_root docker --version
 as_root docker compose version
+as_root docker buildx version
 COMPOSE_VER="$(as_root docker compose version --short 2>/dev/null | sed 's/^v//')"
 
 # ---- 3. repository ---------------------------------------------------------
