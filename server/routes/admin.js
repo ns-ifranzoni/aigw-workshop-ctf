@@ -86,10 +86,10 @@ function typeToTransactionType(t) {
 
 function buildChallengeQuery(activity, gatewayAction, transactionType) {
   const parts = [];
-  if (activity) parts.push(`activity like "${activity}"`);
+  if (activity) parts.push(`x_cs_activity like "${activity}"`);
   if (gatewayAction) {
     const map = { Allow: 'allow', Block: 'block', 'Block; Replace': 'block-replace', Alert: 'alert', Monitor: 'monitor', Replace: 'replace' };
-    parts.push(`policy_action eq "${map[gatewayAction] || gatewayAction}"`);
+    parts.push(`x_aig_action eq "${map[gatewayAction] || gatewayAction}"`);
   }
   if (transactionType) {
     const map = { Access: 'access', DLP: 'dlp', Guardrails: 'aisecurity' };
@@ -2451,8 +2451,8 @@ router.post('/demo-data', requireAdmin, async (req, res) => {
 
   function buildQuery(activity, gatewayAction, transactionType) {
     const parts = [];
-    if (activity) parts.push(`activity like "${activity}"`);
-    if (gatewayAction) parts.push(`policy_action eq "${gwActionMap[gatewayAction] || gatewayAction}"`);
+    if (activity) parts.push(`x_cs_activity like "${activity}"`);
+    if (gatewayAction) parts.push(`x_aig_action eq "${gwActionMap[gatewayAction] || gatewayAction}"`);
     if (transactionType) parts.push(`x_aig_policy_evaluation.type eq "${txTypeMap[transactionType] || transactionType}"`);
     return parts.join(' AND ');
   }

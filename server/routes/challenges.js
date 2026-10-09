@@ -238,10 +238,10 @@ function typeToGroup(t) {
 
 function buildTransactionQuery(activity, gatewayAction, transactionType) {
   const parts = [];
-  if (activity) parts.push(`activity like "${activity}"`);
+  if (activity) parts.push(`x_cs_activity like "${activity}"`);
   if (gatewayAction) {
     const map = { 'Allow': 'allow', 'Alert': 'alert', 'Monitor': 'monitor', 'Block': 'block', 'Replace': 'replace', 'Block; Replace': 'block-replace' };
-    parts.push(`policy_action eq "${map[gatewayAction] || gatewayAction}"`);
+    parts.push(`x_aig_action eq "${map[gatewayAction] || gatewayAction}"`);
   }
   if (transactionType) {
     const map = { 'Access': 'access', 'DLP': 'dlp', 'Guardrails': 'guardrails' };
