@@ -11,7 +11,7 @@ seq,title,description,ns_query,ns_event_type,ns_time_filter,visible,challenge_gr
 -   Status: Enabled
 Then click Save and Apply.","","application",30,1,"policy","policy_access","Prompt","Replace","Access","","gpt-4.1-mini",50,"Be careful with every detail. If anything does not match exactly, it will not count.",
 4,"Testing Access control in your chat","Let’s test your Access Control policy.
-<u>In Settings</u>, select OpenAI as the LLM provider and gpt-4.1-mini as the model. Then send a chat request using the Secured Path. If your prompt is replaced with the message you configured, you can validate this challenge.","x_cs_activity like ""Prompt"" AND x_aig_action eq ""replace"" AND transaction_category eq ""access""","application",30,1,"events","event_access","Prompt","Replace","Access","","",50,"",
+<u>In Settings</u>, select OpenAI as the LLM provider and gpt-4.1-mini as the model. Then send a chat request using the Secured Path. If your prompt is replaced with the message you configured, you can validate this challenge.","x_cs_activity like ""Prompt"" AND x_aig_action eq ""replace"" AND x_aig_policy_evaluation.type eq ""access""","application",30,1,"events","event_access","Prompt","Replace","Access","","",50,"",
 5,"Data Leak Prevention between Agentic AI and LLM communications","Have you noticed that it’s the same DLP engine across everything, even for Netskope AI Gateway? Create a DLP Policy with this configuration:
 -   Source: Your assigned Token Group
 -   Activity: Prompt

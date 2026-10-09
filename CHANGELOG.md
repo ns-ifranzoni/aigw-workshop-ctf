@@ -1,7 +1,7 @@
 # Changelog
 
 ## v1.2.4
-- **Fix:** event challenge queries use the current AI Gateway event fields: `x_cs_activity like "<activity>"` (was `activity eq`) and `x_aig_action eq "<action>"` (was `policy_action eq`). Applies to the queries built from the challenge editor/admin and to the bundled template. Challenges already stored keep their old query until the template is re-imported or the query is regenerated.
+- **Fix:** event challenge queries use the current AI Gateway event fields: `x_cs_activity like "<activity>"` (was `activity eq`), `x_aig_action eq "<action>"` (was `policy_action eq`) and `x_aig_policy_evaluation.type eq "<type>"` (was `transaction_category eq`, so Access challenges match too). Applies to the queries built from the challenge editor/admin and to the bundled template. Challenges already stored keep their old query until the template is re-imported or the query is regenerated.
 
 ## v1.2.3
 - **Fix:** importing challenges from CSV broke Markdown text. All three importers (**Challenges → Import**, the setup wizard's CSV import and **Sync template**) split the file on every newline before parsing it, so any description or hint with line breaks inside its quoted field was cut in half: the bundled template imported as 11 rows instead of 9, with text fragments as titles, and an export could not be imported back unchanged. The file is now parsed in a single pass (RFC 4180: newlines, commas and quotes inside quoted fields, CRLF from Excel, UTF-8 BOM, blank lines), so Export → Import round-trips exactly.

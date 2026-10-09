@@ -244,8 +244,8 @@ function buildTransactionQuery(activity, gatewayAction, transactionType) {
     parts.push(`x_aig_action eq "${map[gatewayAction] || gatewayAction}"`);
   }
   if (transactionType) {
-    const map = { 'Access': 'access', 'DLP': 'dlp', 'Guardrails': 'guardrails' };
-    parts.push(`transaction_category eq "${map[transactionType] || transactionType}"`);
+    const map = { 'Access': 'access', 'DLP': 'dlp', 'Guardrails': 'aisecurity' };
+    parts.push(`x_aig_policy_evaluation.type eq "${map[transactionType] || transactionType}"`);
   }
   return parts.join(' AND ');
 }
