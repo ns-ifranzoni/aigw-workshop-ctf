@@ -238,7 +238,7 @@ function typeToGroup(t) {
 
 function buildTransactionQuery(activity, gatewayAction, transactionType) {
   const parts = [];
-  if (activity) parts.push(`activity eq "${activity}"`);
+  if (activity) parts.push(`activity like "${activity}"`);
   if (gatewayAction) {
     const map = { 'Allow': 'allow', 'Alert': 'alert', 'Monitor': 'monitor', 'Block': 'block', 'Replace': 'replace', 'Block; Replace': 'block-replace' };
     parts.push(`policy_action eq "${map[gatewayAction] || gatewayAction}"`);
