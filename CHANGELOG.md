@@ -1,5 +1,11 @@
 # Changelog
 
+## v1.2.3
+- **Fix:** importing challenges from CSV broke Markdown text. All three importers (**Challenges → Import**, the setup wizard's CSV import and **Sync template**) split the file on every newline before parsing it, so any description or hint with line breaks inside its quoted field was cut in half: the bundled template imported as 11 rows instead of 9, with text fragments as titles, and an export could not be imported back unchanged. The file is now parsed in a single pass (RFC 4180: newlines, commas and quotes inside quoted fields, CRLF from Excel, UTF-8 BOM, blank lines), so Export → Import round-trips exactly.
+- **Fix:** the wizard CSV import and **Sync template** ignored the `hint_penalty` column; they now read it like the main importer.
+- **Fix:** **Sync template** wiped every challenge before checking the downloaded template; it now aborts first if the template has no challenges.
+- **Installer:** `install.sh` upgrades Docker Buildx when the distro one is older than 0.17.0 (recent Compose refuses to build with it, seen on Amazon Linux 2023), and the final summary shows the default admin user.
+
 ## v1.2.2
 - **Fix:** the authentication rate limits are now sized for a classroom where almost every participant shares one public IP. Only failed attempts count, but a whole room can easily produce enough validation errors or "username already taken" responses to trip the old caps. The per-IP ceiling on login goes from 100 to 2000 failures per 15 min, registration from 15 to 1000 (the old value could lock the entire room out of registering for up to 15 minutes), and admin setup from 10 to 50. The per-account login limit (10 failures per username) is unchanged, so guessing a single password is still throttled.
 
