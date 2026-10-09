@@ -1,5 +1,8 @@
 # Changelog
 
+## v1.2.4
+- **Change:** event challenges now match the activity with `activity like "<activity>"` instead of `activity eq`. Applies to the query built from the challenge activity (challenge editor and admin) and to the bundled template. Challenges already stored keep their old query until the template is re-imported or the query is regenerated.
+
 ## v1.2.3
 - **Fix:** importing challenges from CSV broke Markdown text. All three importers (**Challenges → Import**, the setup wizard's CSV import and **Sync template**) split the file on every newline before parsing it, so any description or hint with line breaks inside its quoted field was cut in half: the bundled template imported as 11 rows instead of 9, with text fragments as titles, and an export could not be imported back unchanged. The file is now parsed in a single pass (RFC 4180: newlines, commas and quotes inside quoted fields, CRLF from Excel, UTF-8 BOM, blank lines), so Export → Import round-trips exactly.
 - **Fix:** the wizard CSV import and **Sync template** ignored the `hint_penalty` column; they now read it like the main importer.
