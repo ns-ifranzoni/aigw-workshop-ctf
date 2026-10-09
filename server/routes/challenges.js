@@ -4,6 +4,7 @@ const { requireAdmin, requireAuth } = require('../middleware/auth');
 const { getSetting, setSetting } = require('../settings-cache');
 const ns = require('../netskope');
 const { participantTokenGroupName, participantTokenGroupId } = require('../participant-tokens');
+const { parseCSV } = require('../csv');
 
 const router = express.Router();
 
@@ -335,48 +336,28 @@ router.get('/export', requireAdmin, (req, res) => {
   res.send([header, ...lines].join('\n'));
 });
 
-function parseCSVLine(line) {
-  const result = [];
-  let i = 0;
-  while (i < line.length) {
-    if (line[i] === '"') {
-      let val = ''; i++;
-      while (i < line.length) {
-        if (line[i] === '"' && line[i + 1] === '"') { val += '"'; i += 2; }
-        else if (line[i] === '"') { i++; break; }
-        else val += line[i++];
-      }
-      result.push(val);
-      if (line[i] === ',') i++;
-    } else {
-      let start = i;
-      while (i < line.length && line[i] !== ',') i++;
-      result.push(line.slice(start, i));
-      if (line[i] === ',') i++;
-    }
-  }
-  return result;
-}
-
 // Import CSV
 router.post('/import', requireAdmin, (req, res) => {
   const { csv } = req.body;
   if (!csv) return res.status(400).json({ error: 'No CSV provided' });
-  const lines = csv.trim().split('\n');
-  const header = parseCSVLine(lines[0]).map(h => h.toLowerCase().trim());
+  // Parse the whole text at once: Markdown descriptions/hints contain newlines
+  // inside quoted fields, so splitting on '\n' first would cut them in half.
+  const rows = parseCSV(csv);
+  if (!rows.length) return res.status(400).json({ error: 'CSV is empty' });
+  const header = rows[0].map(h => h.toLowerCase().trim());
   const idx = k => header.indexOf(k);
   let imported = 0;
   const maxOrder = db.prepare('SELECT MAX(order_num) as m FROM challenges').get().m || 0;
-  for (let i = 1; i < lines.length; i++) {
+  for (let i = 1; i < rows.length; i++) {
     try {
-    const cols = parseCSVLine(lines[i]);
+    const cols = rows[i];
     const title = cols[idx('title')]?.trim();
     if (!title) continue;
     const type = normalizeChallengeType(cols[idx('challenge_type')]?.trim(), cols[idx('challenge_group')]?.trim());
-    const activity = cols[idx('ch_activity')] || null;
-    const gatewayAction = cols[idx('ch_gateway_action')] || null;
-    const transactionType = cols[idx('ch_transaction_type')] || typeToTransactionType(type) || null;
-    const hasModernConfig = activity || gatewayAction || transactionType || cols[idx('ch_text_key')] || cols[idx('ch_model')];
+    const activity = cols[idx('ch_activity')]?.trim() || null;
+    const gatewayAction = cols[idx('ch_gateway_action')]?.trim() || null;
+    const transactionType = cols[idx('ch_transaction_type')]?.trim() || typeToTransactionType(type) || null;
+    const hasModernConfig = activity || gatewayAction || transactionType || cols[idx('ch_text_key')]?.trim() || cols[idx('ch_model')];
     const nsQuery = (type !== 'text' && !type.startsWith('policy_'))
       ? (hasModernConfig ? buildTransactionQuery(activity, gatewayAction, transactionType) : (cols[idx('ns_query')] || ''))
       : '';
@@ -389,15 +370,15 @@ router.post('/import', requireAdmin, (req, res) => {
         title,
         cols[idx('description')] || '',
         nsQuery,
-        cols[idx('ns_event_type')] || 'page',
+        cols[idx('ns_event_type')]?.trim() || 'page',
         parseInt(cols[idx('ns_time_filter')]) || 30,
         parseInt(cols[idx('visible')]) || 0,
         type,
         activity,
         gatewayAction,
         transactionType,
-        cols[idx('ch_text_key')] || null,
-        cols[idx('ch_model')] || null,
+        cols[idx('ch_text_key')]?.trim() || null,
+        cols[idx('ch_model')]?.trim() || null,
         parseInt(cols[idx('ch_points')]) || 50,
         cols[idx('hint')] || null,
         parseHintPenalty(cols[idx('hint_penalty')])

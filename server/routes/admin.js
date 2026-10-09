@@ -3,6 +3,7 @@ const path = require('path');
 const bcrypt = require('bcrypt');
 const { v4: uuidv4 } = require('uuid');
 const db = require('../db');
+const { parseCSV } = require('../csv');
 const { setSetting } = require('../settings-cache');
 const { requireAdmin, requireAuth } = require('../middleware/auth');
 const ns = require('../netskope');
@@ -54,23 +55,11 @@ async function deleteNetskopeTokenAndGroup(tenant, apiToken, tokenRow) {
   }
 }
 
-function parseCSVLine(line) {
-  const cols = [];
-  let cur = '', inQuote = false;
-  for (let i = 0; i < line.length; i++) {
-    const ch = line[i];
-    if (inQuote) {
-      if (ch === '"' && line[i + 1] === '"') { cur += '"'; i++; }
-      else if (ch === '"') { inQuote = false; }
-      else { cur += ch; }
-    } else {
-      if (ch === '"') { inQuote = true; }
-      else if (ch === ',') { cols.push(cur.trim()); cur = ''; }
-      else { cur += ch; }
-    }
-  }
-  cols.push(cur.trim());
-  return cols;
+// Optional per-challenge hint penalty: blank/invalid -> null (use the global default)
+function parseHintPenalty(v) {
+  if (v === null || v === undefined || String(v).trim() === '') return null;
+  const n = parseInt(v, 10);
+  return Number.isNaN(n) || n < 0 ? null : n;
 }
 
 function normalizeChallengeType(t, group) {
@@ -1385,43 +1374,47 @@ router.post('/challenges/sync-template', requireAdmin, async (req, res) => {
     if (!response.ok) return res.status(502).json({ error: `Template download failed: HTTP ${response.status}` });
 
     const csv = await response.text();
-    const lines = csv.trim().split('\n');
-    const header = lines[0].toLowerCase().split(',').map(h => h.trim().replace(/^"|"$/g, ''));
+    // Parse the whole text at once: Markdown descriptions/hints contain newlines
+    // inside quoted fields, so splitting on '\n' first would cut them in half.
+    const rows = parseCSV(csv);
+    if (rows.length < 2) return res.status(502).json({ error: 'Template contains no challenges' });
+    const header = rows[0].map(h => h.toLowerCase().trim());
     const idx = k => header.indexOf(k);
     db.prepare('DELETE FROM challenges').run();
     let imported = 0;
-    for (let i = 1; i < lines.length; i++) {
-      const cols = parseCSVLine(lines[i]);
+    for (let i = 1; i < rows.length; i++) {
+      const cols = rows[i];
       const title = cols[idx('title')]?.trim();
       if (!title) continue;
       const type = normalizeChallengeType(cols[idx('challenge_type')]?.trim(), cols[idx('challenge_group')]?.trim());
-      const activity = cols[idx('ch_activity')] || null;
-      const gatewayAction = cols[idx('ch_gateway_action')] || null;
-      const transactionType = cols[idx('ch_transaction_type')] || typeToTransactionType(type) || null;
-      const hasModernConfig = activity || gatewayAction || transactionType || cols[idx('ch_text_key')] || cols[idx('ch_model')];
+      const activity = cols[idx('ch_activity')]?.trim() || null;
+      const gatewayAction = cols[idx('ch_gateway_action')]?.trim() || null;
+      const transactionType = cols[idx('ch_transaction_type')]?.trim() || typeToTransactionType(type) || null;
+      const hasModernConfig = activity || gatewayAction || transactionType || cols[idx('ch_text_key')]?.trim() || cols[idx('ch_model')];
       const nsQuery = (type !== 'text' && !type.startsWith('policy_'))
         ? (hasModernConfig ? buildChallengeQuery(activity, gatewayAction, transactionType) : (cols[idx('ns_query')] || ''))
         : '';
       db.prepare(`INSERT INTO challenges
         (order_num, title, description, ns_query, ns_event_type, ns_time_filter, visible,
-         challenge_type, ch_activity, ch_gateway_action, ch_transaction_type, ch_text_key, ch_model, ch_points, hint)
-        VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`)
+         challenge_type, ch_activity, ch_gateway_action, ch_transaction_type, ch_text_key, ch_model, ch_points, hint, hint_penalty)
+        VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`)
         .run(
           parseInt(cols[idx('order_num')] || cols[idx('seq')]) || imported + 1,
           title,
           cols[idx('description')] || '',
           nsQuery,
-          cols[idx('ns_event_type')] || 'page',
+          cols[idx('ns_event_type')]?.trim() || 'page',
           parseInt(cols[idx('ns_time_filter')]) || 30,
           parseInt(cols[idx('visible')]) || 0,
           type,
           activity,
           gatewayAction,
           transactionType,
-          cols[idx('ch_text_key')] || null,
-          cols[idx('ch_model')] || null,
+          cols[idx('ch_text_key')]?.trim() || null,
+          cols[idx('ch_model')]?.trim() || null,
           parseInt(cols[idx('ch_points')]) || 50,
-          cols[idx('hint')] || null
+          cols[idx('hint')] || null,
+          parseHintPenalty(cols[idx('hint_penalty')])
         );
       imported++;
     }
@@ -1435,43 +1428,47 @@ router.post('/challenges/import-csv', requireAdmin, (req, res) => {
   try {
     const { csv } = req.body;
     if (!csv) return res.status(400).json({ error: 'No CSV data provided' });
-    const lines = csv.trim().split('\n');
-    const header = lines[0].toLowerCase().split(',').map(h => h.trim().replace(/^"|"$/g, ''));
+    // Parse the whole text at once: Markdown descriptions/hints contain newlines
+    // inside quoted fields, so splitting on '\n' first would cut them in half.
+    const rows = parseCSV(csv);
+    if (!rows.length) return res.status(400).json({ error: 'CSV is empty' });
+    const header = rows[0].map(h => h.toLowerCase().trim());
     const idx = k => header.indexOf(k);
     let imported = 0;
     const maxOrder = db.prepare('SELECT MAX(order_num) as m FROM challenges').get().m || 0;
-    for (let i = 1; i < lines.length; i++) {
-      const cols = parseCSVLine(lines[i]);
+    for (let i = 1; i < rows.length; i++) {
+      const cols = rows[i];
       const title = cols[idx('title')]?.trim();
       if (!title) continue;
       const type = normalizeChallengeType(cols[idx('challenge_type')]?.trim(), cols[idx('challenge_group')]?.trim());
-      const activity = cols[idx('ch_activity')] || null;
-      const gatewayAction = cols[idx('ch_gateway_action')] || null;
-      const transactionType = cols[idx('ch_transaction_type')] || typeToTransactionType(type) || null;
-      const hasModernConfig = activity || gatewayAction || transactionType || cols[idx('ch_text_key')] || cols[idx('ch_model')];
+      const activity = cols[idx('ch_activity')]?.trim() || null;
+      const gatewayAction = cols[idx('ch_gateway_action')]?.trim() || null;
+      const transactionType = cols[idx('ch_transaction_type')]?.trim() || typeToTransactionType(type) || null;
+      const hasModernConfig = activity || gatewayAction || transactionType || cols[idx('ch_text_key')]?.trim() || cols[idx('ch_model')];
       const nsQuery = (type !== 'text' && !type.startsWith('policy_'))
         ? (hasModernConfig ? buildChallengeQuery(activity, gatewayAction, transactionType) : (cols[idx('ns_query')] || ''))
         : '';
       db.prepare(`INSERT INTO challenges
         (order_num, title, description, ns_query, ns_event_type, ns_time_filter, visible,
-         challenge_type, ch_activity, ch_gateway_action, ch_transaction_type, ch_text_key, ch_model, ch_points, hint)
-        VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`)
+         challenge_type, ch_activity, ch_gateway_action, ch_transaction_type, ch_text_key, ch_model, ch_points, hint, hint_penalty)
+        VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`)
         .run(
           parseInt(cols[idx('order_num')] || cols[idx('seq')]) || maxOrder + imported + 1,
           title,
           cols[idx('description')] || '',
           nsQuery,
-          cols[idx('ns_event_type')] || 'page',
+          cols[idx('ns_event_type')]?.trim() || 'page',
           parseInt(cols[idx('ns_time_filter')]) || 30,
           parseInt(cols[idx('visible')]) || 0,
           type,
           activity,
           gatewayAction,
           transactionType,
-          cols[idx('ch_text_key')] || null,
-          cols[idx('ch_model')] || null,
+          cols[idx('ch_text_key')]?.trim() || null,
+          cols[idx('ch_model')]?.trim() || null,
           parseInt(cols[idx('ch_points')]) || 50,
-          cols[idx('hint')] || null
+          cols[idx('hint')] || null,
+          parseHintPenalty(cols[idx('hint_penalty')])
         );
       imported++;
     }
