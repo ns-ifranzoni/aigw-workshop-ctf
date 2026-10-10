@@ -1,5 +1,8 @@
 # Changelog
 
+## v1.2.6
+- **Fix:** any text passed a text challenge whose key used a variable that had no value. With `%tokengroup` and a participant without a token group the key collapsed to an empty string, and `includes('')` is always true, so any answer (even an empty one) earned the points. The same happened with `%gateway_url` / `%gateway_private_url` when the gateway URL was not set. The check now answers 409 (`no_token_group` or `gateway_not_configured`) before any penalty, and the portal shows a "Challenge not ready" message instead of a wrong-answer penalty.
+
 ## v1.2.5
 - **Fix:** event challenge queries use the current AI Gateway event fields: `x_cs_activity like "<activity>"` (was `activity eq`), `x_aig_action eq "<action>"` (was `policy_action eq`) and `x_aig_policy_evaluation.type eq "<type>"` (was `transaction_category eq`, so Access challenges match too). The check now builds the filter from the challenge's configured activity, gateway action and type every time it validates, so challenges created before this version work without re-importing. Applies to the queries built from the challenge editor/admin and to the bundled template.
 

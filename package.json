@@ -1,6 +1,6 @@
 {
   "name": "clouddefenders26-aichatwebsite",
-  "version": "1.2.5",
+  "version": "1.2.6",
   "description": "Cloud Defenders 2026 - AI Gateway Workshop Portal",
   "main": "server/index.js",
   "license": "MIT",

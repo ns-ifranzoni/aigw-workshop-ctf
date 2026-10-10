@@ -89,6 +89,17 @@ function interpolateVariables(text, participantCode, participantApiKey) {
   return result;
 }
 
+// Variables referenced by `text` that currently resolve to nothing for this
+// participant (see interpolateVariables).
+function unresolvedVariables(text, participantCode, participantApiKey) {
+  const missing = [];
+  const gatewayUrl = getSetting('gateway_url');
+  if (/%gateway_url/.test(text) && !gatewayUrl) missing.push('gateway_url');
+  if (/%gateway_private_url/.test(text) && !(getSetting('gateway_url_private') || gatewayUrl)) missing.push('gateway_private_url');
+  if (/%tokengroup/.test(text) && !participantTokenGroupName(participantCode, participantApiKey)) missing.push('tokengroup');
+  return missing;
+}
+
 // ── CTF countdown timer ───────────────────────────────────
 // Server-authoritative, pausable countdown. The clock only ticks while the CTF
 // state is 'run'; Stop/Standby freeze it. Effective remaining is computed from
@@ -692,7 +703,19 @@ router.post('/participant/:id/check', requireAuth, async (req, res) => {
       // ── Text: keyword match ──────────────────────────────
       let keyword = (challenge.ch_text_key || '').trim();
       if (!keyword) return res.status(400).json({ error: 'Challenge has no text key configured' });
-      keyword = interpolateVariables(keyword, code, req.user.api_key);
+      // A variable with no value (participant without a token group, gateway URL
+      // not configured) would collapse the key to '' and `includes('')` is always
+      // true, so any text would pass. Treat it as a configuration problem instead,
+      // before any penalty.
+      const unresolved = unresolvedVariables(keyword, code, req.user.api_key);
+      if (unresolved.length) {
+        return res.status(409).json({
+          error: unresolved.includes('tokengroup') ? 'no_token_group' : 'gateway_not_configured',
+          variables: unresolved,
+        });
+      }
+      keyword = interpolateVariables(keyword, code, req.user.api_key).trim();
+      if (!keyword) return res.status(409).json({ error: 'text_key_unresolved' });
       const { participant_text } = req.body;
       const input = (participant_text || '').trim();
       found = input.toLowerCase().includes(keyword.toLowerCase());

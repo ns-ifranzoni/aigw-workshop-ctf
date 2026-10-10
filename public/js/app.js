@@ -6635,6 +6635,18 @@ async function checkChallenge(id, btn) {
       await loadParticipantChallenges();
       return;
     }
+    // Configuration problems are not wrong answers: no penalty, just tell the user.
+    if (!res.ok && !d.found) {
+      const msgs = {
+        no_token_group: 'You do not have a token group yet. Ask the instructor to create your token, then try again.',
+        gateway_not_configured: 'The gateway URL is not configured yet. Ask the instructor to set it up.',
+        text_key_unresolved: 'This challenge is not ready yet. Ask the instructor to review it.',
+      };
+      showAlert('Challenge not ready', msgs[d.error] || d.error || `HTTP ${res.status}`);
+      btn.disabled = false;
+      btn.textContent = 'Check';
+      return;
+    }
     if (d.found) {
       const idx = participantChallenges.findIndex(c => c.id === id);
       if (idx >= 0) {
